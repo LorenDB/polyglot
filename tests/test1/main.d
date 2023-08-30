@@ -17,3 +17,9 @@ void main()
 	checkMyFoo(MyFoo.Baz);
 	checkMyFoo(MyFoo.Foobar);
 }
+
+unittest
+{
+	assert(square(2) == 4);
+	assert(MyFoo.Baz == 100);
+}

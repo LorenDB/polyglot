@@ -4,7 +4,4 @@
 
 #include "WrapperWriter.h"
 
-WrapperWriter::WrapperWriter()
-{
-
-}
+WrapperWriter::WrapperWriter() {}

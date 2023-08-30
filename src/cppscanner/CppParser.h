@@ -8,11 +8,6 @@
 
 #include "../core/PolyglotAST.h"
 
-namespace
-{
-    constexpr auto POLYGLOT_VERSION = "0.0.1-devel";
-}
-
 enum class BindingType
 {
     Function,
@@ -29,10 +24,10 @@ struct BindingFile
     std::vector<std::pair<BindingType, std::string>> declarations;
 };
 
-class CppBindingGenerator
+class CppParser
 {
 public:
-    CppBindingGenerator();
+    CppParser();
 
     void addFunction(const clang::FunctionDecl *function, const std::string &filename);
     void addEnum(const clang::EnumDecl *e, const std::string &filename);
@@ -40,6 +35,8 @@ public:
     void dumpToFile();
 
 private:
+    polyglot::QualifiedType typeFromClangType(const clang::QualType &qualType, const clang::Decl *decl) const;
+
 //    std::vector<std::string> m_cppToDBindingDecls;
 //    std::vector<std::string> m_dToRustBindingDefs;
 
@@ -49,4 +46,5 @@ private:
 //    std::string m_rustBindingSource;
 
     std::map<std::string, BindingFile> m_bindingFiles;
+    std::map<std::string, polyglot::AST> m_asts;
 };

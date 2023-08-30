@@ -12,7 +12,7 @@
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/Path.h>
 
-#include "cppscanner/CppBindingGenerator.h"
+#include "CppParser.h"
 
 using namespace clang;
 using namespace clang::ast_matchers;
@@ -76,7 +76,7 @@ public:
     }
 
 private:
-    CppBindingGenerator m_generator;
+    CppParser m_generator;
 };
 
 static llvm::cl::OptionCategory polyglotOptions("polyglot options");

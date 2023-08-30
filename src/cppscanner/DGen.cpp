@@ -6,7 +6,7 @@
 
 #include <iostream>
 
-#include "CppBindingGenerator.h"
+#include "CppParser.h"
 #include "Utils.h"
 
 std::string DGen::getDFileHeader(const std::string &moduleName)
@@ -24,7 +24,7 @@ std::string DGen::getDFileHeader(const std::string &moduleName)
 module {};
 
 @nogc:)",
-        POLYGLOT_VERSION,
+        Utils::POLYGLOT_VERSION,
         timeStr.substr(0, timeStr.size() - 1), // remove the '\n'
         moduleName);
 }
