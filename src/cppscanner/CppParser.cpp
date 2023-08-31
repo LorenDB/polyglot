@@ -99,7 +99,7 @@ void CppParser::addEnum(const clang::EnumDecl *e, const std::string &filename)
     ast.nodes.push_back(enumNode);
 }
 
-void CppParser::dumpToFile()
+void CppParser::writeWrappers()
 {
     for (const auto &[moduleName, ast] : m_asts)
     {
