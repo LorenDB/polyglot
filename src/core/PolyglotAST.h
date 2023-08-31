@@ -17,7 +17,7 @@ namespace polyglot
         Cpp,
         D,
         Rust,
-        Swift, // not yet supported
+        Swift, // not yet supported but currently planned longer-term
     };
 
     enum class ASTNodeType
@@ -56,7 +56,7 @@ namespace polyglot
         Enum,
         Class,
 
-        // Types that are known to need implicit bindings (at least in some cases)
+        // Types that are known to need indirect bindings (at least in some cases)
         CppStdString,
 
         Undefined,
@@ -104,12 +104,9 @@ namespace polyglot
 
             //! The default value of the parameter for languages that support it.
             std::optional<Value> defaultValue;
-
-            //! A temporary workaround until I get the Value struct working
-            std::optional<std::string> defaultValueString;
         };
 
-        virtual ASTNodeType nodeType() const override { return ASTNodeType::Function; }
+        virtual ASTNodeType nodeType() const override;
 
         //! The name of the function.
         std::string functionName;
@@ -133,12 +130,9 @@ namespace polyglot
 
             //! If the enumerator has an explicit value set, it will be stored here.
             std::optional<Value> value;
-
-            //! A temporary workaround until I get the Value struct working
-            std::optional<std::string> valueString;
         };
 
-        virtual ASTNodeType nodeType() const override { return ASTNodeType::Enum; }
+        virtual ASTNodeType nodeType() const override;
         std::string enumName;
         std::vector<Enumerator> enumerators;
     };

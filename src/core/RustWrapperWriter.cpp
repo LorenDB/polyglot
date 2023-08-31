@@ -61,9 +61,8 @@ void RustWrapperWriter::write(const AST &ast, std::ostream &out) const
                 for (const auto &enumerator : e->enumerators)
                 {
                     out << '\t' << enumerator.name;
-                    if (enumerator.valueString.has_value())
-//                        out << " = " + getValueString(enumerator.value.value());
-                        out << " = " + enumerator.valueString.value();
+                    if (enumerator.value.has_value())
+                        out << " = " + getValueString(enumerator.value.value());
                     out << ",\n";
                 }
                 out << "}\n";

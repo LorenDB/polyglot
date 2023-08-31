@@ -44,9 +44,8 @@ module {};
             for (const auto &param : function->parameters)
             {
                 params += getTypeString(param.type) + ' ' + param.name;
-                if (param.defaultValueString.has_value())
-//                    params += " = " + getValueString(param.defaultValue.value());
-                    params += " = " + param.defaultValueString.value();
+                if (param.defaultValue.has_value())
+                    params += " = " + getValueString(param.defaultValue.value());
                 params += ", ";
             }
             out << params.substr(0, params.size() - 2) + ");";
@@ -62,9 +61,8 @@ module {};
             for (const auto &enumerator : e->enumerators)
             {
                 out << '\t' << enumerator.name;
-                if (enumerator.valueString.has_value())
-//                    out << " = " + getValueString(enumerator.value.value());
-                    out << " = " << enumerator.valueString.value();
+                if (enumerator.value.has_value())
+                    out << " = " + getValueString(enumerator.value.value());
                 out << ",\n";
             }
             out << "}";

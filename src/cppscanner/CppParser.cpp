@@ -16,19 +16,31 @@
 #include "../core/RustWrapperWriter.h"
 #include "Utils.h"
 
-std::string getExprValueString(const clang::Expr *defaultValue, const clang::ASTContext &context)
+polyglot::Value getExprValue(const clang::Expr *defaultValue, const clang::ASTContext &context)
 {
     clang::Expr::EvalResult result;
     if (!defaultValue->EvaluateAsConstantExpr(result, context))
         throw std::runtime_error("Failed to evaluate expression");
 
-    //    if (result.Val.isNullPointer())
-    //        return "null";
+    using namespace polyglot;
+    Value ret;
+    if (result.Val.isInt())
+    {
+        ret.type = Type::Int64;
+        ret.value = result.Val.getInt().getExtValue();
+    }
+    else if (result.Val.isFloat())
+    {
+        ret.type = Type::Float64;
+        ret.value = result.Val.getFloat().convertToDouble();
+    }
+    else if (result.Val.isNullPointer()) // TODO: integrate this case with the wrappers
+    {
+        ret.type = Type::Void;
+        ret.value = nullptr;
+    }
 
-    std::string retval;
-    llvm::raw_string_ostream stream(retval);
-    defaultValue->printPretty(stream, nullptr, clang::PrintingPolicy(context.getLangOpts()));
-    return retval;
+    return ret;
 }
 
 CppParser::CppParser() {}
@@ -75,7 +87,7 @@ void CppParser::addFunction(const clang::FunctionDecl *function, const std::stri
         p.name = param->getNameAsString();
         p.type = typeFromClangType(param->getType(), param);
         if (param->getDefaultArg())
-            p.defaultValueString = getExprValueString(param->getDefaultArg(), function->getASTContext());
+            p.defaultValue = getExprValue(param->getDefaultArg(), function->getASTContext());
         functionNode->parameters.push_back(p);
     }
 
@@ -114,7 +126,7 @@ void CppParser::addEnum(const clang::EnumDecl *e, const std::string &filename)
         polyglot::EnumNode::Enumerator enumerator2;
         enumerator2.name = enumerator->getNameAsString();
         if (enumerator->getInitExpr())
-            enumerator2.valueString = getExprValueString(enumerator->getInitExpr(), e->getASTContext());
+            enumerator2.value = getExprValue(enumerator->getInitExpr(), e->getASTContext());
         enumNode->enumerators.push_back(enumerator2);
     }
 
