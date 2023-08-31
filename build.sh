@@ -16,18 +16,24 @@ install_binaries()
     cp build/polyglot-cpp "${polyglot_install_dir}/polyglot-cpp"
 }
 
+fail_build_script()
+{
+    echo $1
+    exit
+}
+
 echo "Building polyglot-cpp..."
 echo
 
 mkdir -p build
-cmake -Bbuild .
-cmake --build build -- -j $(nproc)
+cmake -Bbuild . || fail_build_script "Failed to run CMake"
+cmake --build build -- -j $(nproc) || fail_build_script "Failed to build polyglot-cpp"
 
 echo
 echo "Building polybuild..."
 echo
 
-dub build
+dub build || fail_build_script "Failed to build polybuild"
 
 echo
 read -r -p "Would you like to install polyglot now? [y/N] " response
