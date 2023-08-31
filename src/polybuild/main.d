@@ -33,6 +33,18 @@ int main(string[] args)
 	int retval;
 	Languages languages;
 
+	string clangIncludePath;
+	{
+		auto task = execute(["clang++", "-print-resource-dir"]);
+		if (task.status != 0)
+		{
+			writeln("Couldn't get clang resource path!");
+			return task.status;
+		}
+		// the output has a trailing \n by default
+		clangIncludePath = task.output[0 .. $ - 1] ~ "/include";
+	}
+
 	writeln("Calling polyglot-cpp on " ~ args[1 .. $].to!string);
 
 	// wrap each file
@@ -41,7 +53,7 @@ int main(string[] args)
 		if (file.endsWith(".cpp") || file.endsWith(".cxx") || file.endsWith(".c++") || file.endsWith(".cc") || file.endsWith(".C"))
 		{
 			languages.cpp = true;
-			retval = spawnProcess(["polyglot-cpp", file, "--"]).wait();
+			retval = spawnProcess(["polyglot-cpp", file, "--", "-isystem", clangIncludePath]).wait();
 		}
 
 		// TODO: these don't exist yet :(
@@ -56,9 +68,8 @@ int main(string[] args)
 			// retval = spawnProcess(["polyglot-rs", file]).wait();
 		}
 
-		// TODO: temporary hack because polyglot-cpp throws an error any time you parse a file that includes stddef.h
-		// if (retval != 0)
-			// return retval;
+		if (retval != 0)
+			return retval;
 	}
 
 	writeln("Compiling " ~ args[1 .. $].to!string);
@@ -89,8 +100,8 @@ int main(string[] args)
 	foreach(fileEntry; dirEntries("", "*.d", SpanMode.depth))
 		dFiles ~= fileEntry;
 
-	writeln("Executing " ~ (["ldc2"] ~ dFiles.sort.uniq.array ~ ["-c", "--of", "objFile.o"]).to!string);
-	retval = spawnProcess(["ldc2"] ~ dFiles.sort.uniq.array ~ ["-c", "--of", "objFile.o"]).wait();
+	writeln("Executing " ~ (["ldc2"] ~ dFiles.sort.uniq.array ~ ["-c", "-of", "objFile.o"]).to!string);
+	retval = spawnProcess(["ldc2"] ~ dFiles.sort.uniq.array ~ ["-c", "-of", "objFile.o"]).wait();
 
 	if (retval != 0)
 		return retval;
