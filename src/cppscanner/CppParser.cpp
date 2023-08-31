@@ -47,24 +47,7 @@ CppParser::CppParser() {}
 
 void CppParser::addFunction(const clang::FunctionDecl *function, const std::string &filename)
 {
-    // baseFilename can have an extension like ".d" or ".rs" appended to it to produce a valid filename
-    std::string baseFilename;
-    if (filename.ends_with(".cpp") || filename.ends_with(".cxx") || filename.ends_with(".c++"))
-        baseFilename = filename.substr(0, filename.size() - 4);
-    else if (filename.ends_with(".cc"))
-        baseFilename = filename.substr(0, filename.size() - 3);
-    else if (filename.ends_with(".C"))
-        baseFilename = filename.substr(0, filename.size() - 2);
-    else
-        baseFilename = filename;
-    std::string moduleName = baseFilename;
-    if (moduleName.find('/') != std::string::npos)
-        moduleName = moduleName.substr(moduleName.find_last_of('/') + 1);
-    if (moduleName.find('\\') != std::string::npos)
-        moduleName = moduleName.substr(moduleName.find_last_of('\\') + 1);
-
-    baseFilename = moduleName;
-
+    auto moduleName = Utils::getModuleName(filename);
     auto returnType = function->getReturnType();
     auto mangler = function->getASTContext().createMangleContext();
     std::string mangledName;
@@ -96,24 +79,7 @@ void CppParser::addFunction(const clang::FunctionDecl *function, const std::stri
 
 void CppParser::addEnum(const clang::EnumDecl *e, const std::string &filename)
 {
-    // baseFilename can have an extension like ".d" or ".rs" appended to it to produce a valid filename
-    std::string baseFilename;
-    if (filename.ends_with(".cpp") || filename.ends_with(".cxx") || filename.ends_with(".c++"))
-        baseFilename = filename.substr(0, filename.size() - 4);
-    else if (filename.ends_with(".cc"))
-        baseFilename = filename.substr(0, filename.size() - 3);
-    else if (filename.ends_with(".C"))
-        baseFilename = filename.substr(0, filename.size() - 2);
-    else
-        baseFilename = filename;
-    std::string moduleName = baseFilename;
-    if (moduleName.find('/') != std::string::npos)
-        moduleName = moduleName.substr(moduleName.find_last_of('/') + 1);
-    if (moduleName.find('\\') != std::string::npos)
-        moduleName = moduleName.substr(moduleName.find_last_of('\\') + 1);
-
-    baseFilename = moduleName;
-
+    auto moduleName = Utils::getModuleName(filename);
     auto &ast = m_asts[moduleName];
     ast.moduleName = moduleName;
     ast.language = polyglot::Language::Cpp;

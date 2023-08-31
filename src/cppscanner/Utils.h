@@ -12,4 +12,6 @@ namespace Utils
 
     bool isStdString(const clang::QualType &type);
     bool isFixedWidthIntegerType(const clang::QualType &type);
+
+    std::string getModuleName(std::string filename);
 } // namespace Utils
