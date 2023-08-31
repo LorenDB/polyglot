@@ -5,10 +5,10 @@
 #pragma once
 
 #include <cstdint>
-#include <string>
-#include <vector>
 #include <optional>
+#include <string>
 #include <variant>
+#include <vector>
 
 namespace polyglot
 {
@@ -153,4 +153,4 @@ namespace polyglot
         //! The name of the module that this AST represents.
         std::string moduleName;
     };
-}
+} // namespace polyglot

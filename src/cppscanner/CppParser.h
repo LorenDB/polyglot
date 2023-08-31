@@ -37,14 +37,5 @@ public:
 private:
     polyglot::QualifiedType typeFromClangType(const clang::QualType &qualType, const clang::Decl *decl) const;
 
-//    std::vector<std::string> m_cppToDBindingDecls;
-//    std::vector<std::string> m_dToRustBindingDefs;
-
-//    std::string m_dBackendTranslationSource;
-//    std::string m_dBindingSource;
-//    std::string m_cppBindingSource;
-//    std::string m_rustBindingSource;
-
-    std::map<std::string, BindingFile> m_bindingFiles;
     std::map<std::string, polyglot::AST> m_asts;
 };

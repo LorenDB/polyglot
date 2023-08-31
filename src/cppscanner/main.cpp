@@ -65,16 +65,14 @@ public:
             {
                 auto &diagnostics = enumDecl->getASTContext().getDiagnostics();
                 auto id = diagnostics.getDiagnosticIDs()->getCustomDiagID(
-                    clang::DiagnosticIDs::Error, std::format("Could not wrap enum `{}`: {}", enumDecl->getNameAsString(), e.what()));
+                    clang::DiagnosticIDs::Error,
+                    std::format("Could not wrap enum `{}`: {}", enumDecl->getNameAsString(), e.what()));
                 diagnostics.Report(enumDecl->getBeginLoc(), id);
             }
         }
     }
 
-    void dump()
-    {
-        m_generator.dumpToFile();
-    }
+    void dump() { m_generator.dumpToFile(); }
 
 private:
     CppParser m_generator;

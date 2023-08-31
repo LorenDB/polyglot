@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: Loren Burkholder
+//
+// SPDX-License-Identifier: GPL-3.0
+
 #include "RustWrapperWriter.h"
 
 #include <ctime>
@@ -34,7 +38,10 @@ void RustWrapperWriter::write(const AST &ast, std::ostream &out) const
             if (previousNodeType != ASTNodeType::Function)
                 out << "\nextern {\n";
 
-            out << std::format("\t" R"(#[link_name = "{}"] pub fn )", function->mangledName) << function->functionName << '(';
+            out << std::format("\t"
+                               R"(#[link_name = "{}"] pub fn )",
+                               function->mangledName)
+                << function->functionName << '(';
 
             std::string params;
             // note that Rust doesn't support default arguments
@@ -94,12 +101,12 @@ std::string RustWrapperWriter::getTypeString(const QualifiedType &type) const
     case Type::Void:
         typeString += "void";
         break;
-//    case Type::Char:
-//        typeString += "char";
-//        break;
-//    case Type::Char16:
-//        typeString += "wchar";
-//        break;
+        //    case Type::Char:
+        //        typeString += "char";
+        //        break;
+        //    case Type::Char16:
+        //        typeString += "wchar";
+        //        break;
     case Type::Char32:
         typeString += "char";
         break;
@@ -139,9 +146,9 @@ std::string RustWrapperWriter::getTypeString(const QualifiedType &type) const
     case Type::Float64:
         typeString += "f64";
         break;
-//    case Type::Float128:
-//        typeString += "real";
-//        break;
+        //    case Type::Float128:
+        //        typeString += "real";
+        //        break;
     case Type::Enum:
     case Type::Class:
         if (type.nameString.has_value())

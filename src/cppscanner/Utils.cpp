@@ -11,7 +11,7 @@ bool Utils::isStdString(const clang::QualType &type)
     auto t = type.getTypePtr();
     const auto *record = t->isPointerType() ? t->getPointeeCXXRecordDecl() : t->getAsCXXRecordDecl();
     if (!record)
-      return false;
+        return false;
     return record->getQualifiedNameAsString() == "std::basic_string";
 }
 
