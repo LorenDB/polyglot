@@ -8,22 +8,24 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(LLVM REQUIRED)
 
 add_executable(polyglot-cpp
-    src/core/DWrapperWriter.cpp
-    src/core/DWrapperWriter.h
-    src/core/PolyglotAST.cpp
-    src/core/PolyglotAST.h
-    src/core/RustWrapperWriter.cpp
-    src/core/RustWrapperWriter.h
-    src/core/WrapperWriter.cpp
-    src/core/WrapperWriter.h
+    core/DWrapperWriter.cpp
+    core/DWrapperWriter.h
+    core/PolyglotAST.cpp
+    core/PolyglotAST.h
+    core/RustWrapperWriter.cpp
+    core/RustWrapperWriter.h
+    core/Utils.cpp
+    core/Utils.h
+    core/WrapperWriter.cpp
+    core/WrapperWriter.h
 
-    src/cppscanner/main.cpp
-    src/cppscanner/CppParser.cpp
-    src/cppscanner/CppParser.h
-    src/cppscanner/Utils.cpp
-    src/cppscanner/Utils.h
+    polyglot-cpp/main.cpp
+    polyglot-cpp/CppParser.cpp
+    polyglot-cpp/CppParser.h
+    polyglot-cpp/CppUtils.cpp
+    polyglot-cpp/CppUtils.h
 )
-
+target_include_directories(polyglot-cpp PRIVATE core polyglot-cpp)
 target_link_libraries(polyglot-cpp PRIVATE
     clang-cpp
     LLVM

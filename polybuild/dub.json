@@ -3,13 +3,11 @@
 		"Loren Burkholder"
 	],
 	"copyright": "Copyright © 2023, Loren Burkholder",
-	"dependencies": {
-		"argparse": "~>1.3.0"
-	},
 	"description": "The Polyglot build helper.",
 	"license": "GPL-3.0",
 	"name": "polybuild",
-	"sourcePaths": ["src/polybuild"],
-	"importPaths": ["src/polybuild"],
-	"targetPath": "./build/"
+	"dependencies": {
+		"argparse": "~>1.3.0"
+	},
+	"targetPath": "../build/"
 }

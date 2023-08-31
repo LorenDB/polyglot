@@ -10,11 +10,10 @@
 
 #include <clang/AST/Mangle.h>
 
-#include "../core/DWrapperWriter.h"
-#include "../core/RustWrapperWriter.h"
-#include "DGen.h"
-#include "RustGen.h"
+#include "DWrapperWriter.h"
+#include "RustWrapperWriter.h"
 #include "Utils.h"
+#include "CppUtils.h"
 
 polyglot::Value getExprValue(const clang::Expr *defaultValue, const clang::ASTContext &context)
 {
@@ -134,7 +133,7 @@ polyglot::QualifiedType CppParser::typeFromClangType(const clang::QualType &type
         ret.baseType = Type::Char32;
     else if (type->isIntegerType())
     {
-        if (!Utils::isFixedWidthIntegerType(type))
+        if (!CppUtils::isFixedWidthIntegerType(type))
         {
             auto &diagnostics = decl->getASTContext().getDiagnostics();
             auto id = diagnostics.getDiagnosticIDs()->getCustomDiagID(clang::DiagnosticIDs::Warning,
@@ -189,7 +188,7 @@ polyglot::QualifiedType CppParser::typeFromClangType(const clang::QualType &type
         ret.baseType = Type::Enum;
         ret.nameString = enumType->getDecl()->getNameAsString();
     }
-    else if (Utils::isStdString(type))
+    else if (CppUtils::isStdString(type))
         ret.baseType = Type::CppStdString;
     else
         throw std::runtime_error("Unrecognized type");

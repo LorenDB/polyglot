@@ -1,0 +1,13 @@
+{
+	"authors": [
+		"Loren Burkholder"
+	],
+	"description": "The D scanner for polyglot",
+	"license": "GPL-3.0",
+	"name": "polyglot-d",
+	"copyright": "Copyright © 2023, Loren Burkholder",
+	"dependencies": {
+		"dmd": "~>2.105.0"
+	},
+	"targetPath": "../build/"
+}

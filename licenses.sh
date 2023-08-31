@@ -9,8 +9,6 @@
 
 set -eu
 
-FILES=$(find src examples -type f \( -iname "*.cpp" -o -iname "*.h" -o -iname "*.d" -o -iname "*.rs" \))
-
+FILES=$(find polyglot-cpp polyglot-d polybuild examples -type f \( -iname "*.cpp" -o -iname "*.h" -o -iname "*.d" -o -iname "*.rs" \))
 reuse annotate --exclude-year --copyright="Loren Burkholder" --license="GPL-3.0" $FILES
-
 git diff --exit-code

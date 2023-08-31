@@ -6,12 +6,8 @@
 
 #include "clang/ASTMatchers/ASTMatchers.h"
 
-namespace Utils
+namespace CppUtils
 {
-    constexpr auto POLYGLOT_VERSION = "0.0.1-devel";
-
     bool isStdString(const clang::QualType &type);
     bool isFixedWidthIntegerType(const clang::QualType &type);
-
-    std::string getModuleName(std::string filename);
-} // namespace Utils
+} // namespace CppUtils
