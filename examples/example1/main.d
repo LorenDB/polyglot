@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0
 
 import std;
-import test1;
+import example1;
 
 void main()
 {
