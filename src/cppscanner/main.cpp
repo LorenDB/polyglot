@@ -31,41 +31,42 @@ public:
             if (function->isTemplated())
                 return;
 
-//            const auto filename = llvm::sys::path::filename(result.SourceManager->getFilename(function->getLocation())).str();
             const auto filename = result.SourceManager->getFilename(function->getLocation()).str();
-
             if (result.SourceManager->isInSystemHeader(function->getLocation()) || filename.empty())
                 return;
 
-            std::cout << "Wrapping function " << function->getNameAsString() << " from " << filename << std::endl;
             try
             {
                 m_generator.addFunction(function, filename);
             }
             catch (const std::runtime_error &e)
             {
-                std::cerr << "Unable to wrap " << filename << ": " << e.what() << std::endl;
+                auto &diagnostics = function->getASTContext().getDiagnostics();
+                auto id = diagnostics.getDiagnosticIDs()->getCustomDiagID(
+                    clang::DiagnosticIDs::Error,
+                    std::format("Could not wrap function `{}`: {}", function->getNameAsString(), e.what()));
+                diagnostics.Report(function->getBeginLoc(), id);
             }
         }
-        else if (const EnumDecl *e = result.Nodes.getNodeAs<EnumDecl>("enum"))
+        else if (const EnumDecl *enumDecl = result.Nodes.getNodeAs<EnumDecl>("enum"))
         {
-            if (e->isTemplated())
+            if (enumDecl->isTemplated())
                 return;
 
-//            const auto filename = llvm::sys::path::filename(result.SourceManager->getFilename(function->getLocation())).str();
-            const auto filename = result.SourceManager->getFilename(e->getLocation()).str();
-
-            if (result.SourceManager->isInSystemHeader(e->getLocation()) || filename.empty())
+            const auto filename = result.SourceManager->getFilename(enumDecl->getLocation()).str();
+            if (result.SourceManager->isInSystemHeader(enumDecl->getLocation()) || filename.empty())
                 return;
 
-            std::cout << "Wrapping enum " << e->getNameAsString() << " from " << filename << std::endl;
             try
             {
-                m_generator.addEnum(e, filename);
+                m_generator.addEnum(enumDecl, filename);
             }
             catch (const std::runtime_error &e)
             {
-                std::cerr << "Unable to wrap " << filename << ": " << e.what() << std::endl;
+                auto &diagnostics = enumDecl->getASTContext().getDiagnostics();
+                auto id = diagnostics.getDiagnosticIDs()->getCustomDiagID(
+                    clang::DiagnosticIDs::Error, std::format("Could not wrap enum `{}`: {}", enumDecl->getNameAsString(), e.what()));
+                diagnostics.Report(enumDecl->getBeginLoc(), id);
             }
         }
     }
