@@ -23,11 +23,11 @@ int32_t square(int32_t root)
     return root * root;
 }
 
-//template<typename T>
-//T squaredCppTemplate(T root)
+// template<typename T>
+// T squaredCppTemplate(T root)
 //{
-//    return root * root;
-//}
+//     return root * root;
+// }
 
 void testLoop()
 {
@@ -35,19 +35,19 @@ void testLoop()
         std::cout << "Loop is at " << i << std::endl;
 }
 
-//std::string cppStdString()
+// std::string cppStdString()
 //{
-//    return "foobar";
-//}
+//     return "foobar";
+// }
 
-//double foo1(float foo, float bar = 12.345, char baz = 'c', bool b = true, void *v = nullptr)
+// double foo1(float foo, float bar = 12.345, char baz = 'c', bool b = true, void *v = nullptr)
 //{
-//    return static_cast<double>(squaredCpp(foo * bar - static_cast<double>(baz)));
-//}
+//     return static_cast<double>(squaredCpp(foo * bar - static_cast<double>(baz)));
+// }
 
-//void foo2(char a, wchar_t b, char32_t c, char16_t d);
-//void foo3(float a, double b, long double c);
-//void foo4(short a, unsigned short b, int c, unsigned int d, long e, unsigned long f, long long g, unsigned long long h);
+// void foo2(char a, wchar_t b, char32_t c, char16_t d);
+// void foo3(float a, double b, long double c);
+// void foo4(short a, unsigned short b, int c, unsigned int d, long e, unsigned long f, long long g, unsigned long long h);
 
 enum class MyFoo
 {
@@ -73,19 +73,18 @@ int64_t checkMyFoo(MyFoo foo)
     case MyFoo::Foobar:
         std::cout << "Foobar: ";
         break;
-
     }
     std::cout << static_cast<int64_t>(foo) << std::endl;
     return static_cast<int64_t>(foo);
 }
 
-//typedef int MyBadIntType;
-//typedef int32_t MyGoodIntType;
+// typedef int MyBadIntType;
+// typedef int32_t MyGoodIntType;
 
-//void foo5(int int0, int32_t int1, MyBadIntType int2, MyGoodIntType int3);
+// void foo5(int int0, int32_t int1, MyBadIntType int2, MyGoodIntType int3);
 
-//class Foo1
+// class Foo1
 //{
-//    void foo();
-//    void bar(int i);
-//};
+//     void foo();
+//     void bar(int i);
+// };

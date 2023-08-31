@@ -10,10 +10,10 @@
 
 #include <clang/AST/Mangle.h>
 
+#include "CppUtils.h"
 #include "DWrapperWriter.h"
 #include "RustWrapperWriter.h"
 #include "Utils.h"
-#include "CppUtils.h"
 
 polyglot::Value getExprValue(const clang::Expr *defaultValue, const clang::ASTContext &context)
 {
