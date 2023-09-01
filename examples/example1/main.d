@@ -16,6 +16,8 @@ void main()
 	checkMyFoo(MyFoo.Bar);
 	checkMyFoo(MyFoo.Baz);
 	checkMyFoo(MyFoo.Foobar);
+	Example1.foo();
+	Example1.Test.foo();
 }
 
 unittest

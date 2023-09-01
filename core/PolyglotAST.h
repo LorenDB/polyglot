@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <string>
 #include <variant>
@@ -62,11 +63,20 @@ namespace polyglot
         Undefined,
     };
 
+    struct Namespace
+    {
+        std::shared_ptr<Namespace> parentNamespace;
+        std::string name;
+    };
+
     //! The base class of all Polyglot AST nodes.
     struct ASTNode
     {
         //! Returns the node type. Use this to determine what to upcast the current object to.
         virtual ASTNodeType nodeType() const = 0;
+
+        //! If not null, this represents the C++ namespace the node is part of.
+        std::shared_ptr<Namespace> cppNamespace;
     };
 
     //! QualifiedType holds a Type with any additional qualifiers like "const". In addition, if the type is something like

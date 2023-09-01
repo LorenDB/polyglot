@@ -88,3 +88,19 @@ int64_t checkMyFoo(MyFoo foo)
 //     void foo();
 //     void bar(int i);
 // };
+
+namespace Example1
+{
+    namespace Test
+    {
+        void foo()
+        {
+            std::cout << "Called Example1::Test::foo()" << std::endl;
+        }
+    } // namespace Test
+
+    void foo()
+    {
+        std::cout << "Called Example1::foo()" << std::endl;
+    }
+} // namespace Example1

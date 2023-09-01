@@ -9,7 +9,7 @@
 class RustWrapperWriter : public WrapperWriter
 {
 public:
-    void write(const polyglot::AST &ast, std::ostream &out) const final;
+    void write(const polyglot::AST &ast, std::ostream &out) final;
 
 protected:
     std::string getTypeString(const polyglot::QualifiedType &type) const final;

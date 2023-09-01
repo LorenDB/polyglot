@@ -11,7 +11,7 @@ class WrapperWriter
 public:
     WrapperWriter();
 
-    virtual void write(const polyglot::AST &ast, std::ostream &out) const = 0;
+    virtual void write(const polyglot::AST &ast, std::ostream &out) = 0;
 
 protected:
     virtual std::string getTypeString(const polyglot::QualifiedType &type) const = 0;

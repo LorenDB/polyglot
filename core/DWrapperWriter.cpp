@@ -4,16 +4,20 @@
 
 #include "DWrapperWriter.h"
 
+#include <algorithm>
 #include <ctime>
 #include <format>
 #include <iostream>
+#include <stack>
 #include <string>
 
 #include "Utils.h"
 
 using namespace polyglot;
 
-void DWrapperWriter::write(const AST &ast, std::ostream &out) const
+DWrapperWriter::~DWrapperWriter() {}
+
+void DWrapperWriter::write(const AST &ast, std::ostream &out)
 {
     auto t = std::time(nullptr);
     std::string timeStr = std::asctime(std::localtime(&t));
@@ -25,57 +29,52 @@ void DWrapperWriter::write(const AST &ast, std::ostream &out) const
 module {};
 
 @nogc:
-
 )",
         Utils::POLYGLOT_VERSION,
         timeStr.substr(0, timeStr.size() - 1), // remove the '\n'
         "C++", // TODO: make this dynamic
         ast.moduleName);
 
+    if (ast.language == Language::Cpp)
+        out << "extern(C++):\n";
+    out << "\n";
+
     for (const auto &node : ast.nodes)
     {
-        if (node->nodeType() == ASTNodeType::Function)
+        if (node->cppNamespace == nullptr)
+            m_namespaceOrganizer.childNodes.push_back(node);
+        else
         {
-            auto function = dynamic_cast<FunctionNode *>(node);
-            if (function == nullptr)
-                throw std::runtime_error("Node claimed to be FunctionNode, but cast failed");
-
-            if (ast.language == Language::Cpp)
-                out << "extern(C++) ";
-            else
-                out << std::format(R"(pragma(mangle, "{}") )", function->mangledName);
-            out << getTypeString(function->returnType) << ' ' << function->functionName << '(';
-            std::string params;
-            for (const auto &param : function->parameters)
+            std::stack<std::string> namespaces;
+            for (auto ns = node->cppNamespace; ns != nullptr; ns = ns->parentNamespace)
+                namespaces.push(ns->name);
+            NamespaceOrganizer *ns = &m_namespaceOrganizer;
+            while (!namespaces.empty())
             {
-                params += getTypeString(param.type) + ' ' + param.name;
-                if (param.defaultValue.has_value())
-                    params += " = " + getValueString(param.defaultValue.value());
-                params += ", ";
+                bool found{false};
+                for (int i = 0; i < ns->childNamespaces.size(); ++i)
+                {
+                    if (ns->childNamespaces[i]->currentNamespace.name == namespaces.top())
+                    {
+                        ns = ns->childNamespaces[i];
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                {
+                    auto childNs = new NamespaceOrganizer;
+                    childNs->currentNamespace.name = namespaces.top();
+                    ns->childNamespaces.push_back(childNs);
+                    ns = childNs;
+                }
+                namespaces.pop();
             }
-            out << params.substr(0, params.size() - 2) + ");";
-            // TODO: am I missing any qualifiers that could come after the parenthesis?
+            ns->childNodes.push_back(node);
         }
-        else if (node->nodeType() == ASTNodeType::Enum)
-        {
-            auto e = dynamic_cast<EnumNode *>(node);
-            if (e == nullptr)
-                throw std::runtime_error("Node claimed to be EnumNode, but cast failed");
-
-            out << "enum " << e->enumName << "\n{\n";
-            for (const auto &enumerator : e->enumerators)
-            {
-                out << '\t' << enumerator.name;
-                if (enumerator.value.has_value())
-                    out << " = " + getValueString(enumerator.value.value());
-                out << ",\n";
-            }
-            out << "}";
-        }
-
-        out << "\n";
     }
 
+    writeFromNamespaceOrganizer(ast, &m_namespaceOrganizer, out);
     out.flush();
 }
 
@@ -211,5 +210,76 @@ std::string DWrapperWriter::getValueString(const Value &value) const
     default:
         throw std::runtime_error("Bad or unsupported type in DWrapperWriter::getValueString()");
         break;
+    }
+}
+
+void DWrapperWriter::writeFromNamespaceOrganizer(const AST &ast, const NamespaceOrganizer *organizer, std::ostream &out)
+{
+    if (ast.language == Language::Cpp && !organizer->currentNamespace.name.empty())
+    {
+        out << std::string(m_indentationDepth, '\t') << "extern(C++, " << organizer->currentNamespace.name << ")\n";
+        out << std::string(m_indentationDepth, '\t') << "{\n";
+        ++m_indentationDepth;
+    }
+
+    auto previousNodeType = ASTNodeType::Undefined;
+    for (const auto &node : organizer->childNodes)
+    {
+        if (node->nodeType() != ASTNodeType::Function ||
+            (previousNodeType != ASTNodeType::Function && previousNodeType != ASTNodeType::Undefined))
+            out << "\n";
+
+        if (node->nodeType() == ASTNodeType::Function)
+        {
+            auto function = dynamic_cast<FunctionNode *>(node);
+            if (function == nullptr)
+                throw std::runtime_error("Node claimed to be FunctionNode, but cast failed");
+
+            out << std::string(m_indentationDepth, '\t');
+            if (ast.language != Language::Cpp)
+                out << std::format(R"(pragma(mangle, "{}") )", function->mangledName);
+            out << getTypeString(function->returnType) << ' ' << function->functionName << '(';
+            std::string params;
+            for (const auto &param : function->parameters)
+            {
+                params += getTypeString(param.type) + ' ' + param.name;
+                if (param.defaultValue.has_value())
+                    params += " = " + getValueString(param.defaultValue.value());
+                params += ", ";
+            }
+            out << params.substr(0, params.size() - 2) + ");";
+            // TODO: am I missing any qualifiers that could come after the parenthesis?
+        }
+        else if (node->nodeType() == ASTNodeType::Enum)
+        {
+            auto e = dynamic_cast<EnumNode *>(node);
+            if (e == nullptr)
+                throw std::runtime_error("Node claimed to be EnumNode, but cast failed");
+
+            out << std::string(m_indentationDepth, '\t') << "enum " << e->enumName << "\n{\n";
+            for (const auto &enumerator : e->enumerators)
+            {
+                out << std::string(m_indentationDepth + 1, '\t') << enumerator.name;
+                if (enumerator.value.has_value())
+                    out << " = " + getValueString(enumerator.value.value());
+                out << ",\n";
+            }
+            out << std::string(m_indentationDepth, '\t') << "}";
+        }
+
+        out << "\n";
+        previousNodeType = node->nodeType();
+    }
+
+    for (const auto &ns : organizer->childNamespaces)
+    {
+        out << "\n";
+        writeFromNamespaceOrganizer(ast, ns, out);
+    }
+
+    if (ast.language == Language::Cpp && !organizer->currentNamespace.name.empty())
+    {
+        --m_indentationDepth;
+        out << std::string(m_indentationDepth, '\t') << "}\n";
     }
 }

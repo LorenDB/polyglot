@@ -13,7 +13,7 @@
 
 using namespace polyglot;
 
-void RustWrapperWriter::write(const AST &ast, std::ostream &out) const
+void RustWrapperWriter::write(const AST &ast, std::ostream &out)
 {
     auto t = std::time(nullptr);
     std::string timeStr = std::asctime(std::localtime(&t));

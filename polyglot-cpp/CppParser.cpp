@@ -60,6 +60,7 @@ void CppParser::addFunction(const clang::FunctionDecl *function, const std::stri
     ast.language = polyglot::Language::Cpp;
 
     auto functionNode = new polyglot::FunctionNode;
+    functionNode->cppNamespace = CppUtils::buildNamespaceTree(function);
     functionNode->functionName = function->getNameAsString();
     functionNode->mangledName = mangledName;
     functionNode->returnType = typeFromClangType(function->getReturnType(), function);
@@ -84,6 +85,7 @@ void CppParser::addEnum(const clang::EnumDecl *e, const std::string &filename)
     ast.language = polyglot::Language::Cpp;
 
     auto enumNode = new polyglot::EnumNode;
+    enumNode->cppNamespace = CppUtils::buildNamespaceTree(e);
     enumNode->enumName = e->getNameAsString();
     for (const auto &enumerator : e->enumerators())
     {
