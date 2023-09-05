@@ -21,6 +21,15 @@ struct Languages
 	bool rust;
 }
 
+string commandString(string[] parts)
+{
+	assert(parts.length > 0, "You must call commandString() with at least one item");
+	string ret;
+	foreach (part; parts)
+		ret ~= part ~ " ";
+	return ret[0 .. $ - 1];
+}
+
 int main(string[] args)
 {
 	if (args[1 .. $].length == 0)
@@ -81,15 +90,20 @@ int main(string[] args)
 
 		if (file.endsWith(".cpp") || file.endsWith(".cxx") || file.endsWith(".c++") || file.endsWith(".cc") || file.endsWith(".C"))
 		{
-			writeln("Executing " ~ ["clang++", file, "-c", "-o", objFile].to!string);
-			retval = spawnProcess(["clang++", file, "-c", "-o", objFile]).wait();
+			auto command = ["clang++", file, "-c", "-o", objFile];
+			writeln("Executing " ~ commandString(command));
+			retval = spawnProcess(command).wait();
 			if (retval != 0)
 				return retval;
+
+			// TODO: add option to generate assembly; the following comment contains code for that
+			// spawnProcess(["clang++", "-S", file, "-o", file ~ ".s"]);
 		}
 		else if (file.endsWith(".rs"))
 		{
-			writeln("Executing " ~ ["rustc", file, "--emit", "obj", "-o", objFile].to!string);
-			retval = spawnProcess(["rustc", file, "--emit", "obj", "-o", objFile]).wait();
+			auto command = ["rustc", file, "--emit", "obj", "-o", objFile];
+			writeln("Executing " ~ commandString(command));
+			retval = spawnProcess(commandString(command)).wait();
 			if (retval != 0)
 				return retval;
 		}
@@ -100,8 +114,11 @@ int main(string[] args)
 	foreach(fileEntry; dirEntries("", "*.d", SpanMode.depth))
 		dFiles ~= fileEntry;
 
-	writeln("Executing " ~ (["ldc2"] ~ dFiles.sort.uniq.array ~ ["-c", "-of", "objFile.o"]).to!string);
-	retval = spawnProcess(["ldc2"] ~ dFiles.sort.uniq.array ~ ["-c", "-of", "objFile.o"]).wait();
+	auto command = ["ldc2"] ~ dFiles.sort.uniq.array ~ ["-c", "-of", "objFile.o"];
+	writeln("Executing " ~ commandString(command));
+	retval = spawnProcess(command).wait();
+	// TODO: more assembly generation
+	// spawnProcess(["ldc2"] ~ dFiles.sort.uniq.array ~ ["--output-s"]);
 
 	if (retval != 0)
 		return retval;
