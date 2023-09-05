@@ -87,26 +87,14 @@ int64_t *getInt64Ptr() noexcept
 class Foo1
 {
 public:
-    Foo1()
-    {
-        std::cout << "Foo1::Foo1()" << std::endl;
-    }
-    ~Foo1()
-    {
-        std::cout << "Foo1::~Foo1()" << std::endl;
-    }
+    Foo1() { std::cout << "Foo1::Foo1()" << std::endl; }
+    ~Foo1() { std::cout << "Foo1::~Foo1()" << std::endl; }
 
     Foo1(const Foo1 &) = delete;
     Foo1(Foo1 &&) = delete;
 
-    void foo()
-    {
-        std::cout << "Foo1::foo()" << std::endl;
-    }
-    void bar(int64_t i)
-    {
-        std::cout << "Foo1::bar(" << i << ")" << std::endl;
-    }
+    void foo() { std::cout << "Foo1::foo()" << std::endl; }
+    void bar(int64_t i) { std::cout << "Foo1::bar(" << i << ")" << std::endl; }
 };
 
 namespace Example1
@@ -127,32 +115,21 @@ namespace Example1
     class Foo2
     {
     public:
-        Foo2()
-        {
-            std::cout << "Creating new Example1::Foo2" << std::endl;
-        }
+        Foo2() { std::cout << "Creating new Example1::Foo2" << std::endl; }
 
-        Foo2(int32_t i)
-        {
-            m_foo = i;
-        }
+        Foo2(int32_t i) { m_foo = i; }
 
-        ~Foo2()
-        {
-            std::cout << "Destroying Example1::Foo2" << std::endl;
-        }
+        ~Foo2() { std::cout << "Destroying Example1::Foo2" << std::endl; }
 
         Foo2(const Foo2 &) = delete;
         Foo2(Foo2 &&) = delete;
 
         void foo()
         {
-            std::cout << "This Example1::Foo2 object has m_foo set to " << m_foo << " and m_bar set to " << m_bar << std::endl;
+            std::cout << "This Example1::Foo2 object has m_foo set to " << m_foo << " and m_bar set to " << m_bar
+                      << std::endl;
         }
-        void bar(int32_t a/*, char b*/)
-        {
-            std::cout << "Example1::Foo2::bar(): value of a: " << a << std::endl;
-        }
+        void bar(int32_t a /*, char b*/) { std::cout << "Example1::Foo2::bar(): value of a: " << a << std::endl; }
 
         int32_t m_foo = 1;
         double m_bar = 2.0;
