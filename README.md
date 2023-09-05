@@ -2,7 +2,9 @@
 
 Polyglot is the binding generator to end all binding generators. Its aim is to be able to create bindings from any normal compiled language to any other normal compiled language. To do this, Polyglot makes use of clang's libtooling and a whole lot of ugly-looking code generation :)
 
-## Gettings started
+If you want a full list of what Polyglot can do right now, you can check the full [capabilities list](./capabilities.md).
+
+## Getting started
 
 To get started using Polyglot, you will need to make sure that you have the following dependencies installed:
 
