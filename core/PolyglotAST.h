@@ -26,7 +26,7 @@ namespace polyglot
         Function,
         Class,
         Enum,
-        GlobalVariable,
+        Variable,
 
         Undefined,
     };
@@ -89,9 +89,10 @@ namespace polyglot
         bool isVolatile = false;
         bool isArray = false;
         bool isReference = false;
+        bool isRvalueReference = false;
 
         //! This is only set if baseType is equal to Type::Class or Type::Enum.
-        std::optional<std::string> nameString;
+        std::string nameString;
     };
 
     struct Value
@@ -100,22 +101,17 @@ namespace polyglot
         std::variant<bool, char, char16_t, char32_t, int64_t, uint64_t, double, std::string> value;
     };
 
+    struct VariableNode : public ASTNode
+    {
+        virtual ASTNodeType nodeType() const override;
+        QualifiedType type;
+        std::string name;
+        std::optional<Value> value;
+    };
+
     //! Represents a function.
     struct FunctionNode : public ASTNode
     {
-        //! A basic representation of a parameter for a function.
-        struct Parameter
-        {
-            //! The type of the parameter.
-            QualifiedType type;
-
-            //! The parameter name.
-            std::string name;
-
-            //! The default value of the parameter for languages that support it.
-            std::optional<Value> defaultValue;
-        };
-
         virtual ASTNodeType nodeType() const override;
 
         //! The name of the function.
@@ -128,7 +124,25 @@ namespace polyglot
         QualifiedType returnType;
 
         //! The parameter list for the function. See FunctionParameter for more details.
-        std::vector<Parameter> parameters;
+        std::vector<VariableNode> parameters;
+
+        //! Whether the function is marked noreturn.
+        bool isNoreturn;
+
+        //! Whether the function is guaranteed to not throw exceptions.
+        bool isNothrow;
+
+        //! If the function is part of a class, whether the function is static.
+        bool isStatic;
+
+        //! If the function is part of a class, whether the function is virtual.
+        bool isVirtual;
+
+        //! If the function is part of a class, whether the function is marked override.
+        bool isOverride;
+
+        //! If the function is part of a class, whether the function is marked final.
+        bool isFinal;
     };
 
     struct EnumNode : public ASTNode
@@ -145,6 +159,23 @@ namespace polyglot
         virtual ASTNodeType nodeType() const override;
         std::string enumName;
         std::vector<Enumerator> enumerators;
+    };
+
+    struct ClassNode : public ASTNode
+    {
+        enum class Type
+        {
+            Class,
+            Struct,
+        };
+
+        virtual ASTNodeType nodeType() const override;
+        std::string name;
+        Type type;
+        std::vector<FunctionNode> constructors;
+        std::optional<FunctionNode> destructor;
+        std::vector<VariableNode> members;
+        std::vector<FunctionNode> methods;
     };
 
     //! A top-level collection of symbols from a source file. An instance of AST corresponds to precisely one source module.

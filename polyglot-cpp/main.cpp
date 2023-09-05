@@ -14,8 +14,11 @@ using namespace clang;
 using namespace clang::ast_matchers;
 using namespace clang::tooling;
 
-DeclarationMatcher functionMatcher = functionDecl().bind("basicFunction");
+DeclarationMatcher functionMatcher = functionDecl().bind("function");
 DeclarationMatcher enumMatcher = enumDecl().bind("enum");
+// we need unless(isImplicit()) to prevent double matching of classes; see
+// https://stackoverflow.com/questions/55088770/why-clang-ast-shows-two-cxxrecorddecl-for-a-single-class
+DeclarationMatcher classMatcher = cxxRecordDecl(unless(isImplicit())).bind("class");
 
 static llvm::cl::OptionCategory polyglotOptions("polyglot options");
 static llvm::cl::extrahelp commonHelp(CommonOptionsParser::HelpMessage);
@@ -37,6 +40,7 @@ int main(int argc, const char **argv)
     MatchFinder finder;
     finder.addMatcher(functionMatcher, &visitor);
     finder.addMatcher(enumMatcher, &visitor);
+    finder.addMatcher(classMatcher, &visitor);
 
     auto retval = tool.run(newFrontendActionFactory(&finder).get());
     if (retval == 0)

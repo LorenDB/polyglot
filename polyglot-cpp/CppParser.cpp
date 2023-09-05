@@ -47,7 +47,6 @@ CppParser::CppParser() {}
 void CppParser::addFunction(const clang::FunctionDecl *function, const std::string &filename)
 {
     auto moduleName = Utils::getModuleName(filename);
-    auto returnType = function->getReturnType();
     auto mangler = function->getASTContext().createMangleContext();
     std::string mangledName;
     llvm::raw_string_ostream buf(mangledName);
@@ -64,13 +63,14 @@ void CppParser::addFunction(const clang::FunctionDecl *function, const std::stri
     functionNode->functionName = function->getNameAsString();
     functionNode->mangledName = mangledName;
     functionNode->returnType = typeFromClangType(function->getReturnType(), function);
+    functionNode->isNoreturn = function->isNoReturn();
     for (const auto &param : function->parameters())
     {
-        polyglot::FunctionNode::Parameter p;
+        polyglot::VariableNode p;
         p.name = param->getNameAsString();
         p.type = typeFromClangType(param->getType(), param);
         if (param->getDefaultArg())
-            p.defaultValue = getExprValue(param->getDefaultArg(), function->getASTContext());
+            p.value = getExprValue(param->getDefaultArg(), function->getASTContext());
         functionNode->parameters.push_back(p);
     }
 
@@ -100,6 +100,86 @@ void CppParser::addEnum(const clang::EnumDecl *e, const std::string &filename)
     ast.nodes.push_back(enumNode);
 }
 
+void CppParser::addClass(const clang::CXXRecordDecl *classDecl, const std::string &filename)
+{
+    auto moduleName = Utils::getModuleName(filename);
+    auto &ast = m_asts[moduleName];
+    ast.moduleName = moduleName;
+    ast.language = polyglot::Language::Cpp;
+
+    auto classNode = new polyglot::ClassNode;
+    classNode->cppNamespace = CppUtils::buildNamespaceTree(classDecl);
+    classNode->name = classDecl->getNameAsString();
+    if (classDecl->isClass())
+        classNode->type = polyglot::ClassNode::Type::Class;
+    else
+        classNode->type = polyglot::ClassNode::Type::Struct;
+
+    std::unique_ptr<clang::MangleContext> mangler;
+    mangler.reset(classDecl->getASTContext().createMangleContext());
+
+    for (const auto &method : classDecl->methods())
+    {
+        if (method->isDeleted())
+            continue;
+
+        polyglot::FunctionNode functionNode;
+        functionNode.functionName = method->getNameAsString();
+        functionNode.isVirtual = method->isVirtual();
+        functionNode.isStatic = method->isStatic();
+
+        for (const auto &param : method->parameters())
+        {
+            polyglot::VariableNode p;
+            p.name = param->getNameAsString();
+            p.type = typeFromClangType(param->getType(), param);
+            if (param->getDefaultArg())
+                p.value = getExprValue(param->getDefaultArg(), method->getASTContext());
+            functionNode.parameters.push_back(p);
+        }
+
+        if (const auto ctor = llvm::dyn_cast<clang::CXXConstructorDecl>(method); ctor)
+        {
+            llvm::raw_string_ostream buf{functionNode.mangledName};
+            mangler->mangleName(clang::GlobalDecl{ctor, clang::CXXCtorType::Ctor_Base}, buf);
+            buf.flush();
+
+            classNode->constructors.push_back(functionNode);
+        }
+        else if (const auto dtor = llvm::dyn_cast<clang::CXXDestructorDecl>(method); dtor)
+        {
+            llvm::raw_string_ostream buf{functionNode.mangledName};
+            mangler->mangleName(clang::GlobalDecl{dtor, clang::CXXDtorType::Dtor_Base}, buf);
+            buf.flush();
+
+            classNode->destructor = functionNode;
+        }
+        else
+        {
+            functionNode.returnType = typeFromClangType(method->getReturnType(), method);
+            functionNode.isNoreturn = method->isNoReturn();
+
+            llvm::raw_string_ostream buf{functionNode.mangledName};
+            mangler->mangleName(method, buf);
+            buf.flush();
+
+            classNode->methods.push_back(functionNode);
+        }
+    }
+
+    for (const auto &member : classDecl->fields())
+    {
+        polyglot::VariableNode m;
+        m.name = member->getNameAsString();
+        m.type = typeFromClangType(member->getType(), member);
+        if (member->getInClassInitializer())
+            m.value = getExprValue(member->getInClassInitializer(), classDecl->getASTContext());
+        classNode->members.push_back(m);
+    }
+
+    ast.nodes.push_back(classNode);
+}
+
 void CppParser::writeWrappers()
 {
     for (const auto &[moduleName, ast] : m_asts)
@@ -115,6 +195,8 @@ void CppParser::writeWrappers()
 
 polyglot::QualifiedType CppParser::typeFromClangType(const clang::QualType &type, const clang::Decl *decl) const
 {
+    clang::QualType underlyingType = type;
+
     polyglot::QualifiedType ret;
     ret.isConst = type.isConstQualified();
     ret.isPointer = type->isPointerType();
@@ -122,20 +204,23 @@ polyglot::QualifiedType CppParser::typeFromClangType(const clang::QualType &type
     ret.isReference = type->isReferenceType();
     ret.isVolatile = type.isVolatileQualified();
 
+    if (ret.isPointer)
+        underlyingType = type->getPointeeType();
+
     using polyglot::Type;
-    if (type->isVoidType() || type->isVoidPointerType())
+    if (underlyingType->isVoidType() || type->isVoidPointerType())
         ret.baseType = Type::Void;
-    else if (type->isBooleanType())
+    else if (underlyingType->isBooleanType())
         ret.baseType = Type::Bool;
-    else if (type->isCharType())
+    else if (underlyingType->isCharType())
         ret.baseType = Type::Char;
-    else if (type->isChar16Type() || type->isWideCharType())
+    else if (underlyingType->isChar16Type() || underlyingType->isWideCharType())
         ret.baseType = Type::Char16;
-    else if (type->isChar32Type())
+    else if (underlyingType->isChar32Type())
         ret.baseType = Type::Char32;
-    else if (type->isIntegerType())
+    else if (underlyingType->isIntegerType())
     {
-        if (!CppUtils::isFixedWidthIntegerType(type))
+        if (!CppUtils::isFixedWidthIntegerType(underlyingType))
         {
             auto &diagnostics = decl->getASTContext().getDiagnostics();
             auto id = diagnostics.getDiagnosticIDs()->getCustomDiagID(clang::DiagnosticIDs::Warning,
@@ -144,8 +229,8 @@ polyglot::QualifiedType CppParser::typeFromClangType(const clang::QualType &type
             diagnostics.Report(decl->getBeginLoc(), id);
         }
 
-        auto uint = type->isUnsignedIntegerType();
-        auto size = decl->getASTContext().getTypeSize(type);
+        auto uint = underlyingType->isUnsignedIntegerType();
+        auto size = decl->getASTContext().getTypeSize(underlyingType);
         switch (size)
         {
         case 8:
@@ -167,9 +252,9 @@ polyglot::QualifiedType CppParser::typeFromClangType(const clang::QualType &type
             throw std::runtime_error(std::string("Unrecognized integer size: ") + std::to_string(size));
         }
     }
-    else if (type->isFloatingType())
+    else if (underlyingType->isFloatingType())
     {
-        auto size = decl->getASTContext().getTypeSize(type);
+        auto size = decl->getASTContext().getTypeSize(underlyingType);
         switch (size)
         {
         case 32:
@@ -185,15 +270,26 @@ polyglot::QualifiedType CppParser::typeFromClangType(const clang::QualType &type
             throw std::runtime_error(std::string("Unrecognized floating-point size: ") + std::to_string(size));
         }
     }
-    else if (auto enumType = type->getAs<clang::EnumType>(); enumType)
+    else if (auto enumType = underlyingType->getAs<clang::EnumType>(); enumType)
     {
         ret.baseType = Type::Enum;
         ret.nameString = enumType->getDecl()->getNameAsString();
     }
+    else if (auto classType = (underlyingType->getAsCXXRecordDecl()))
+    {
+        ret.baseType = Type::Class;
+        ret.nameString = classType->getName();
+    }
+    else if (auto rValue = underlyingType->getAs<clang::RValueReferenceType>())
+    {
+        ret.isRvalueReference = true;
+        auto qt = rValue->getPointeeType();
+        ret.nameString = qt.getAsString();
+    }
     else if (CppUtils::isStdString(type))
         ret.baseType = Type::CppStdString;
     else
-        throw std::runtime_error("Unrecognized type");
+        throw std::runtime_error(std::format("Unrecognized type: {}", ret.nameString));
 
     return ret;
 }

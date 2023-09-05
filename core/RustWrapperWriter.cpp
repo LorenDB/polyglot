@@ -152,10 +152,10 @@ std::string RustWrapperWriter::getTypeString(const QualifiedType &type) const
         //        break;
     case Type::Enum:
     case Type::Class:
-        if (type.nameString.has_value())
-            typeString += type.nameString.value();
-        else
+        if (type.nameString.empty())
             throw std::runtime_error("Enum or class name was not provided to RustWrapperWriter");
+        else
+            typeString += type.nameString;
         break;
     case Type::CppStdString:
         typeString += "basic_string";

@@ -144,10 +144,10 @@ std::string DWrapperWriter::getTypeString(const QualifiedType &type) const
         break;
     case Type::Enum:
     case Type::Class:
-        if (type.nameString.has_value())
-            typeString += type.nameString.value();
-        else
+        if (type.nameString.empty())
             throw std::runtime_error("Enum or class name was not provided to DWrapperWriter");
+        else
+            typeString += type.nameString;
         break;
     case Type::CppStdString:
         typeString += "basic_string";
@@ -222,6 +222,26 @@ void DWrapperWriter::writeFromNamespaceOrganizer(const AST &ast, const Namespace
         ++m_indentationDepth;
     }
 
+    auto writeFunctionString = [this, &ast, &out](const polyglot::FunctionNode &function, bool isClassMethod) {
+        out << std::string(m_indentationDepth, '\t');
+        if (ast.language != Language::Cpp)
+            out << std::format(R"(pragma(mangle, "{}") )", function.mangledName);
+        if (isClassMethod && !function.isVirtual)
+            out << "final ";
+        out << (function.isNoreturn ? "noreturn" : getTypeString(function.returnType)) << ' ' << function.functionName
+            << '(';
+        std::string params;
+        for (const auto &param : function.parameters)
+        {
+            params += getTypeString(param.type) + ' ' + param.name;
+            if (param.value.has_value())
+                params += " = " + getValueString(param.value.value());
+            params += ", ";
+        }
+        out << params.substr(0, params.size() - 2) + ");";
+        // TODO: am I missing any other qualifiers?
+    };
+
     auto previousNodeType = ASTNodeType::Undefined;
     for (const auto &node : organizer->childNodes)
     {
@@ -235,20 +255,7 @@ void DWrapperWriter::writeFromNamespaceOrganizer(const AST &ast, const Namespace
             if (function == nullptr)
                 throw std::runtime_error("Node claimed to be FunctionNode, but cast failed");
 
-            out << std::string(m_indentationDepth, '\t');
-            if (ast.language != Language::Cpp)
-                out << std::format(R"(pragma(mangle, "{}") )", function->mangledName);
-            out << getTypeString(function->returnType) << ' ' << function->functionName << '(';
-            std::string params;
-            for (const auto &param : function->parameters)
-            {
-                params += getTypeString(param.type) + ' ' + param.name;
-                if (param.defaultValue.has_value())
-                    params += " = " + getValueString(param.defaultValue.value());
-                params += ", ";
-            }
-            out << params.substr(0, params.size() - 2) + ");";
-            // TODO: am I missing any qualifiers that could come after the parenthesis?
+            writeFunctionString(*function, false);
         }
         else if (node->nodeType() == ASTNodeType::Enum)
         {
@@ -256,7 +263,8 @@ void DWrapperWriter::writeFromNamespaceOrganizer(const AST &ast, const Namespace
             if (e == nullptr)
                 throw std::runtime_error("Node claimed to be EnumNode, but cast failed");
 
-            out << std::string(m_indentationDepth, '\t') << "enum " << e->enumName << "\n{\n";
+            out << std::string(m_indentationDepth, '\t') << "enum " << e->enumName << '\n'
+                << std::string(m_indentationDepth, '\t') << "{\n";
             for (const auto &enumerator : e->enumerators)
             {
                 out << std::string(m_indentationDepth + 1, '\t') << enumerator.name;
@@ -264,6 +272,71 @@ void DWrapperWriter::writeFromNamespaceOrganizer(const AST &ast, const Namespace
                     out << " = " + getValueString(enumerator.value.value());
                 out << ",\n";
             }
+            out << std::string(m_indentationDepth, '\t') << "}";
+        }
+        else if (node->nodeType() == ASTNodeType::Class)
+        {
+            auto classNode = dynamic_cast<ClassNode *>(node);
+            if (classNode == nullptr)
+                throw std::runtime_error("Node claimed to be ClassNode, but cast failed");
+
+            out << std::string(m_indentationDepth, '\t');
+            if (classNode->type == polyglot::ClassNode::Type::Class)
+                out << "class ";
+            else
+                out << "struct ";
+            out << classNode->name << '\n'
+                << std::string(m_indentationDepth, '\t') << "{\n"
+                << std::string(m_indentationDepth, '\t') << "public:\n";
+
+            ++m_indentationDepth;
+            for (const auto &constructor : classNode->constructors)
+            {
+                out << std::string(m_indentationDepth, '\t');
+                // TODO: figure out why C++ constructors don't mangle properly
+                out << std::format(R"(pragma(mangle, "{}") this()", constructor.mangledName);
+                std::string params;
+                for (const auto &param : constructor.parameters)
+                {
+                    params += getTypeString(param.type) + ' ' + param.name;
+                    if (param.value.has_value())
+                        params += " = " + getValueString(param.value.value());
+                    params += ", ";
+                }
+                out << params.substr(0, params.size() - 2) + ");";
+                out << "\n";
+            }
+
+            if (classNode->destructor.has_value())
+            {
+                out << std::string(m_indentationDepth, '\t');
+                out << std::format(R"(pragma(mangle, "{}") )", classNode->destructor->mangledName);
+                out << "~this();\n";
+            }
+
+            if (!classNode->methods.empty())
+            {
+                out << "\n";
+                for (const auto &method : classNode->methods)
+                {
+                    writeFunctionString(method, true);
+                    out << "\n";
+                }
+            }
+
+            if (!classNode->members.empty())
+            {
+                out << "\n";
+                for (const auto &member : classNode->members)
+                {
+                    out << std::string(m_indentationDepth, '\t') << getTypeString(member.type) + ' ' + member.name;
+                    if (member.value.has_value())
+                        out << " = " << getValueString(member.value.value());
+                    out << ";\n";
+                }
+            }
+            --m_indentationDepth;
+
             out << std::string(m_indentationDepth, '\t') << "}";
         }
 
