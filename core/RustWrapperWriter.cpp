@@ -75,6 +75,80 @@ void RustWrapperWriter::write(const AST &ast, std::ostream &out)
                 }
                 out << "}\n";
             }
+            else if (node->nodeType() == ASTNodeType::Class)
+            {
+                auto classNode = dynamic_cast<ClassNode *>(node);
+                if (classNode == nullptr)
+                    throw std::runtime_error("Node claimed to be ClassNode, but cast failed");
+
+                if (!classNode->constructors.empty() || classNode->destructor.has_value() || !classNode->methods.empty())
+                    throw std::runtime_error(std::format("Cannot wrap class {}: wrapping member functions, constructors, or "
+                                                         "destructors is currently not supported in Rust",
+                                                         classNode->name));
+
+                out << "#[repr(C)]\npub struct " << classNode->name << "\n{\n";
+                ++m_indentationDepth;
+                for (const auto &member : classNode->members)
+                {
+                    out << std::string(m_indentationDepth, '\t') << "pub "
+                        << member.name + ": " + getTypeString(member.type);
+                    // TODO: Rust doesn't support default values for struct fields; figure out a workaround
+                    // if (member.value.has_value())
+                    //     out << " = " << getValueString(member.value.value());
+                    out << ",\n";
+                }
+                --m_indentationDepth;
+                out << "}\n";
+
+#if 0 // This is temporarily disabled until I figure out how to make Rust aware of external implementations
+                for (const auto &constructor : classNode->constructors)
+                {
+                    out << std::string(m_indentationDepth, '\t');
+                    // TODO: figure out why C++ constructors don't mangle properly
+                    out << std::format(R"(pragma(mangle, "{}") this()", constructor.mangledName);
+                    std::string params;
+                    for (const auto &param : constructor.parameters)
+                    {
+                        params += getTypeString(param.type) + ' ' + param.name;
+                        if (param.value.has_value())
+                            params += " = " + getValueString(param.value.value());
+                        params += ", ";
+                    }
+                    out << params.substr(0, params.size() - 2) + ");";
+                    out << "\n";
+                }
+
+                if (classNode->destructor.has_value())
+                {
+                    out << std::string(m_indentationDepth, '\t');
+                    out << std::format(R"(pragma(mangle, "{}") )", classNode->destructor->mangledName);
+                    out << "~this();\n";
+                }
+
+                if (!classNode->methods.empty())
+                {
+                    out << '\n' << std::string(m_indentationDepth, '\t') << "impl " << classNode->name << " {\n";
+                    ++m_indentationDepth;
+                    for (const auto &method : classNode->methods)
+                    {
+                        out << std::string(m_indentationDepth, '\t')
+                            << std::format(R"(#[link_name = "{}"] pub fn {}()", method.mangledName, method.functionName);
+
+                        std::string params;
+                        // note that Rust doesn't support default arguments
+                        for (const auto &param : method.parameters)
+                            params += param.name + ": " + getTypeString(param.type) + ", ";
+                        out << params.substr(0, params.size() - 2) + ')';
+
+                        if (method.returnType.baseType != Type::Void)
+                            out << " -> " << getTypeString(method.returnType);
+                        out << ";\n";
+                    }
+                    --m_indentationDepth;
+                    out << "}\n";
+                }
+#endif
+            }
         }
 
         previousNodeType = node->nodeType();
