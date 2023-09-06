@@ -103,7 +103,7 @@ int main(string[] args)
 		{
 			auto command = ["rustc", file, "--emit", "obj", "-o", objFile];
 			writeln("Executing " ~ commandString(command));
-			retval = spawnProcess(commandString(command)).wait();
+			retval = spawnProcess(command).wait();
 			if (retval != 0)
 				return retval;
 		}
