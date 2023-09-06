@@ -25,7 +25,7 @@ void RustWrapperWriter::write(const AST &ast, std::ostream &out)
         Utils::POLYGLOT_VERSION,
         timeStr.substr(0, timeStr.size() - 1), // remove the '\n'
         ast.moduleName,
-        "C++"); // TODO: make this dynamic
+        Utils::getLanguageName(ast));
 
     auto previousNodeType = ASTNodeType::Undefined;
     for (const auto &node : ast.nodes)

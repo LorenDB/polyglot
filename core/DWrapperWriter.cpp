@@ -32,7 +32,7 @@ module {};
 )",
         Utils::POLYGLOT_VERSION,
         timeStr.substr(0, timeStr.size() - 1), // remove the '\n'
-        "C++", // TODO: make this dynamic
+        Utils::getLanguageName(ast),
         ast.moduleName);
 
     if (ast.language == Language::Cpp)

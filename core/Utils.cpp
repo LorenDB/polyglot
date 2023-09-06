@@ -25,3 +25,20 @@ std::string Utils::getModuleName(std::string filename)
 
     return moduleName;
 }
+
+std::string Utils::getLanguageName(const polyglot::AST &ast)
+{
+    switch (ast.language)
+    {
+    case polyglot::Language::Cpp:
+        return "C++";
+    case polyglot::Language::D:
+        return "D";
+    case polyglot::Language::Rust:
+        return "Rust";
+    case polyglot::Language::Swift:
+        return "Swift";
+    default:
+        return "<unrecognized language>";
+    }
+}
