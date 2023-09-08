@@ -39,3 +39,7 @@ Polyglot uses two modes of binding generation:
 ## How can I help?
 
 Currently, Polyglot is very minimal; it only supports C++, D, and Rust, and only fundamental types are supported. There is no support for classes and structs, templates are probably not going to be supported for a long time, and advanced things like coroutines and automatic type conversion are way off in the distance. If you are familiar with clang's libtooling, you can help by working on some basic things like structs and classes. Also, the current binding generator is a one-way street: it only supports wrapping C++. I'd appreciate any help building new language wrappers.
+
+## Contact
+
+You can discuss Polyglot on Matrix by joining [#polyglot:nheko.im](https://matrix.to/#/#polyglot:nheko.im).
