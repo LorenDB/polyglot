@@ -29,17 +29,26 @@ void RustWrapperWriter::write(const AST &ast, std::ostream &out)
     auto previousNodeType = ASTNodeType::Undefined;
     for (const auto &node : ast.nodes)
     {
+        if (node->nodeType() == ASTNodeType::Function && previousNodeType != ASTNodeType::Function)
+        {
+            out << "\nextern {\n";
+            ++m_indentationDepth;
+        }
+        else if (node->nodeType() != ASTNodeType::Function && previousNodeType == ASTNodeType::Function)
+        {
+            out << "}\n\n";
+            --m_indentationDepth;
+        }
+
+
         if (node->nodeType() == ASTNodeType::Function)
         {
             auto function = dynamic_cast<FunctionNode *>(node);
             if (function == nullptr)
                 throw std::runtime_error("Node claimed to be FunctionNode, but cast failed");
 
-            if (previousNodeType != ASTNodeType::Function)
-                out << "\nextern {\n";
-
-            out << std::format("\t"
-                               R"(#[link_name = "{}"] pub fn )",
+            out << std::format(R"({}#[link_name = "{}"] pub fn )",
+                               std::string(m_indentationDepth, '\t'),
                                function->mangledName)
                 << function->functionName << '(';
 
@@ -55,24 +64,24 @@ void RustWrapperWriter::write(const AST &ast, std::ostream &out)
         }
         else
         {
-            if (previousNodeType == ASTNodeType::Function)
-                out << "}\n\n";
-
             if (node->nodeType() == ASTNodeType::Enum)
             {
                 auto e = dynamic_cast<EnumNode *>(node);
                 if (e == nullptr)
                     throw std::runtime_error("Node claimed to be EnumNode, but cast failed");
 
-                out << "#[repr(C)]\npub enum " << e->enumName << "\n{\n";
+                out << std::string(m_indentationDepth, '\t') << "#[repr(C)]\n"
+                    << std::string(m_indentationDepth, '\t') << "pub enum " << e->enumName << " {\n";
+                ++m_indentationDepth;
                 for (const auto &enumerator : e->enumerators)
                 {
-                    out << '\t' << enumerator.name;
+                    out << std::string(m_indentationDepth, '\t') << enumerator.name;
                     if (enumerator.value.has_value())
                         out << " = " + getValueString(enumerator.value.value());
                     out << ",\n";
                 }
-                out << "}\n";
+                --m_indentationDepth;
+                out << std::string(m_indentationDepth, '\t') << "}\n";
             }
             else if (node->nodeType() == ASTNodeType::Class)
             {
@@ -80,7 +89,7 @@ void RustWrapperWriter::write(const AST &ast, std::ostream &out)
                 if (classNode == nullptr)
                     throw std::runtime_error("Node claimed to be ClassNode, but cast failed");
 
-                out << "#[repr(C)]\npub struct " << classNode->name << "\n{\n";
+                out << "#[repr(C)]\npub struct " << classNode->name << " {\n";
                 ++m_indentationDepth;
                 for (const auto &member : classNode->members)
                 {
@@ -92,7 +101,7 @@ void RustWrapperWriter::write(const AST &ast, std::ostream &out)
                     out << ",\n";
                 }
                 --m_indentationDepth;
-                out << "}\n";
+                out << std::string(m_indentationDepth, '\t') << "}\n";
 
                 // TODO: wrap constructors and destructors here
 
