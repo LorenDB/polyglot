@@ -24,7 +24,6 @@ void RustWrapperWriter::write(const AST &ast, std::ostream &out)
 )",
         Utils::POLYGLOT_VERSION,
         timeStr.substr(0, timeStr.size() - 1), // remove the '\n'
-        ast.moduleName,
         Utils::getLanguageName(ast));
 
     auto previousNodeType = ASTNodeType::Undefined;
@@ -81,11 +80,6 @@ void RustWrapperWriter::write(const AST &ast, std::ostream &out)
                 if (classNode == nullptr)
                     throw std::runtime_error("Node claimed to be ClassNode, but cast failed");
 
-                if (!classNode->constructors.empty() || classNode->destructor.has_value() || !classNode->methods.empty())
-                    throw std::runtime_error(std::format("Cannot wrap class {}: wrapping member functions, constructors, or "
-                                                         "destructors is currently not supported in Rust",
-                                                         classNode->name));
-
                 out << "#[repr(C)]\npub struct " << classNode->name << "\n{\n";
                 ++m_indentationDepth;
                 for (const auto &member : classNode->members)
@@ -100,45 +94,66 @@ void RustWrapperWriter::write(const AST &ast, std::ostream &out)
                 --m_indentationDepth;
                 out << "}\n";
 
-#if 0 // This is temporarily disabled until I figure out how to make Rust aware of external implementations
-                for (const auto &constructor : classNode->constructors)
-                {
-                    out << std::string(m_indentationDepth, '\t');
-                    // TODO: figure out why C++ constructors don't mangle properly
-                    out << std::format(R"(pragma(mangle, "{}") this()", constructor.mangledName);
-                    std::string params;
-                    for (const auto &param : constructor.parameters)
-                    {
-                        params += getTypeString(param.type) + ' ' + param.name;
-                        if (param.value.has_value())
-                            params += " = " + getValueString(param.value.value());
-                        params += ", ";
-                    }
-                    out << params.substr(0, params.size() - 2) + ");";
-                    out << "\n";
-                }
-
-                if (classNode->destructor.has_value())
-                {
-                    out << std::string(m_indentationDepth, '\t');
-                    out << std::format(R"(pragma(mangle, "{}") )", classNode->destructor->mangledName);
-                    out << "~this();\n";
-                }
+                // TODO: wrap constructors and destructors here
 
                 if (!classNode->methods.empty())
                 {
+                    // First we will write an impl block. The impl block will contain function definitions that will be
+                    // responsible for calling the actual functions. This probably doesn't support virtual functions yet.
+                    // Eventually I intend to see how tools like bindgen or cxx.rs handle virtual functions and copy that
+                    // method.
                     out << '\n' << std::string(m_indentationDepth, '\t') << "impl " << classNode->name << " {\n";
                     ++m_indentationDepth;
                     for (const auto &method : classNode->methods)
                     {
                         out << std::string(m_indentationDepth, '\t')
-                            << std::format(R"(#[link_name = "{}"] pub fn {}()", method.mangledName, method.functionName);
+                            << std::format("pub fn {}(&mut self", method.functionName);
 
                         std::string params;
-                        // note that Rust doesn't support default arguments
                         for (const auto &param : method.parameters)
-                            params += param.name + ": " + getTypeString(param.type) + ", ";
-                        out << params.substr(0, params.size() - 2) + ')';
+                            params += ", " + param.name + ": " + getTypeString(param.type);
+                        out << params << ')';
+
+                        if (method.returnType.baseType != Type::Void)
+                            out << " -> " << getTypeString(method.returnType);
+                        out << " {\n";
+
+                        // Write the call to the actual member function. Note that we have to wrap it as unsafe to allow Rust
+                        // to compile it. On the plus side, the unsafe call here lets us use the wrapped function in safe
+                        // Rust code; if you trust your external code to be safe, this could be really nice.
+                        ++m_indentationDepth;
+                        out << std::string(m_indentationDepth, '\t') << "unsafe { polyglot_" << classNode->name << "_method_"
+                            << method.functionName << "(self";
+                        params.clear();
+                        for (const auto &param : method.parameters)
+                            params += ", " + param.name;
+                        out << params << ") }\n";
+                        --m_indentationDepth;
+
+                        out << std::string(m_indentationDepth, '\t') << "}\n";
+                    }
+                    --m_indentationDepth;
+                    out << "}\n\n";
+
+                    // Now we'll write the bindings to the actual class methods. The name pattern here should hopefully not
+                    // ever cause conflicts with user defined symbols; I don't see any reasonable case where it would cause a
+                    // problem; any naming collisions will probably be a result of abuse rather than accidentally breaking
+                    // things.
+                    out << std::string(m_indentationDepth, '\t') << "extern {\n";
+                    ++m_indentationDepth;
+                    for (const auto &method : classNode->methods)
+                    {
+                        out << std::format("\t"
+                                           R"(#[link_name = "{}"] fn polyglot_{}_method_{}(this: &mut {})",
+                                           method.mangledName,
+                                           classNode->name,
+                                           method.functionName,
+                                           classNode->name);
+
+                        std::string params;
+                        for (const auto &param : method.parameters)
+                            params += ", " + param.name + ": " + getTypeString(param.type);
+                        out << params << ')';
 
                         if (method.returnType.baseType != Type::Void)
                             out << " -> " << getTypeString(method.returnType);
@@ -147,7 +162,6 @@ void RustWrapperWriter::write(const AST &ast, std::ostream &out)
                     --m_indentationDepth;
                     out << "}\n";
                 }
-#endif
             }
         }
 

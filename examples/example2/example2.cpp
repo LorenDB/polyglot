@@ -84,18 +84,20 @@ int64_t checkMyFoo(MyFoo foo) noexcept
 
 // void foo5(int int0, int32_t int1, MyBadIntType int2, MyGoodIntType int3);
 
-// class Foo1
-// {
-// public:
-//     Foo1() { std::cout << "Foo1::Foo1()" << std::endl; }
-//     ~Foo1() { std::cout << "Foo1::~Foo1()" << std::endl; }
+class Foo1
+{
+public:
+    Foo1() { std::cout << "Foo1::Foo1()" << std::endl; }
+    ~Foo1() { std::cout << "Foo1::~Foo1()" << std::endl; }
 
-//     Foo1(const Foo1 &) = delete;
-//     Foo1(Foo1 &&) = delete;
+    Foo1(const Foo1 &) = delete;
+    Foo1(Foo1 &&) = delete;
 
-//     void foo() { std::cout << "Foo1::foo()" << std::endl; }
-//     void bar(int64_t i) { std::cout << "Foo1::bar(" << i << ")" << std::endl; }
-// };
+    void foo() { std::cout << "Foo1::foo(): sixteen: " << sixteen << std::endl; }
+    void bar(int64_t i) { std::cout << "Foo1::bar(" << i << ")" << std::endl; }
+
+    int16_t sixteen;
+};
 
 namespace Example2
 {
@@ -149,9 +151,9 @@ struct Foo3
 
 void polyglot_make_sure_symbols_are_kept_by_the_linker()
 {
-    // Foo1 f;
-    // f.foo();
-    // f.bar(1);
+    Foo1 f;
+    f.foo();
+    f.bar(1);
 
     // Example2::Foo2 f2;
     // f2.foo();

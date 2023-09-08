@@ -31,4 +31,9 @@ fn main()
 		let f3 = example2::Foo3{i: 42};
 		println!("f3.i = {}", f3.i);
 	}
+
+	let mut f1 = example2::Foo1{sixteen: 16};
+	println!("f1.sixteen = {}", f1.sixteen);
+	f1.foo();
+	f1.bar(7);
 }
