@@ -12,6 +12,8 @@ import std.array;
 import std.conv: to;
 import std.logger;
 
+import dyaml;
+
 import rusthelper;
 
 struct Languages
@@ -32,12 +34,19 @@ string commandString(string[] parts)
 
 int main(string[] args)
 {
-	if (args[1 .. $].length == 0)
+	if (args.length > 1)
 	{
-		// TODO: in this case try to use a homebrew buildsystem?
-		writeln("Please specify one or more files");
+		writeln("Polybuild currently does not take any arguments!");
 		return -1;
 	}
+
+	Node buildfile = Loader.fromFile("polybuild.yml").load();
+	string[] sources;
+	foreach (string source; buildfile["sources"])
+		sources ~= source;
+
+	if (!exists("build") || !isDir("build"))
+		mkdir("build");
 
 	int retval;
 	Languages languages;
@@ -54,10 +63,10 @@ int main(string[] args)
 		clangIncludePath = task.output[0 .. $ - 1] ~ "/include";
 	}
 
-	writeln("Calling polyglot-cpp on " ~ args[1 .. $].to!string);
+	writeln("Calling polyglot-cpp on " ~ sources.to!string);
 
 	// wrap each file
-	foreach (file; args[1 .. $])
+	foreach (file; sources)
 	{
 		if (file.endsWith(".cpp") || file.endsWith(".cxx") || file.endsWith(".c++") || file.endsWith(".cc") || file.endsWith(".C"))
 		{
@@ -81,12 +90,12 @@ int main(string[] args)
 			return retval;
 	}
 
-	writeln("Compiling " ~ args[1 .. $].to!string);
+	writeln("Compiling " ~ sources.to!string);
 	
 	// compile each file
-	foreach (file; args[1 .. $])
+	foreach (file; sources)
 	{
-		string objFile = file ~ ".o";
+		string objFile = "build/" ~ file ~ ".o";
 
 		if (file.endsWith(".cpp") || file.endsWith(".cxx") || file.endsWith(".c++") || file.endsWith(".cc") || file.endsWith(".C"))
 		{
@@ -114,7 +123,7 @@ int main(string[] args)
 	foreach(fileEntry; dirEntries("", "*.d", SpanMode.depth))
 		dFiles ~= fileEntry;
 
-	auto command = ["ldc2"] ~ dFiles.sort.uniq.array ~ ["-c", "-of", "objFile.o"];
+	auto command = ["ldc2"] ~ dFiles.sort.uniq.array ~ ["-c", "-of", "build/d_monolithic_obj_file.o"];
 	writeln("Executing " ~ commandString(command));
 	retval = spawnProcess(command).wait();
 	// TODO: more assembly generation
@@ -125,7 +134,7 @@ int main(string[] args)
 
 	// link the whole shebang together
 	string[] objFiles;
-	foreach (fileEntry; dirEntries("", "*.o", SpanMode.depth))
+	foreach (fileEntry; dirEntries("build", "*.o", SpanMode.depth))
 		objFiles ~= fileEntry;
 
 	writeln("Linking " ~ objFiles.sort.uniq.array.to!string);
@@ -134,7 +143,7 @@ int main(string[] args)
 				"-ldruntime-ldc-shared",
 				getRustStandardLibraryPath(),
 				"-o", 
-				"./main"]
+				"build/main"]
 			 ).wait();
 
 	return retval;
