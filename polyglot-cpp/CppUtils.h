@@ -12,6 +12,7 @@ namespace CppUtils
 {
     bool isStdString(const clang::QualType &type);
     bool isFixedWidthIntegerType(const clang::QualType &type);
-    std::shared_ptr<polyglot::Namespace> buildNamespaceTree(const clang::Decl *decl);
 
+    //! Returns a list of namespace names, starting with the outermost namespace.
+    std::vector<std::string> getNamespaceList(const clang::Decl *decl);
 } // namespace CppUtils

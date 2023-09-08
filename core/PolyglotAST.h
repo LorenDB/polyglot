@@ -45,6 +45,7 @@ namespace polyglot
         Class,
         Enum,
         Variable,
+        Namespace,
 
         Undefined,
     };
@@ -87,20 +88,6 @@ namespace polyglot
         Undefined,
     };
 
-    //! Represents a namespace.
-    //!
-    //! The concept of a namespace is most commonly taught from C++. However, some other languages have similarly powerful
-    //! namespacing features; for example, Rust has a nested modules system that allows for C++-like namespacing. When
-    //! supported, this struct should be handled
-    struct Namespace
-    {
-        //! A pointer to the parent namespace of this namespace.
-        std::shared_ptr<Namespace> parentNamespace;
-
-        //! The name of this namespace.
-        std::string name;
-    };
-
     //! The base class of all Polyglot AST nodes.
     struct ASTNode
     {
@@ -108,7 +95,40 @@ namespace polyglot
         virtual ASTNodeType nodeType() const = 0;
 
         //! If not null, this represents the C++ namespace the node is part of.
-        std::shared_ptr<Namespace> cppNamespace;
+//        std::shared_ptr<Namespace> cppNamespace;
+    };
+
+    //! A top-level collection of symbols from a source file. An instance of AST corresponds to precisely one source module.
+    struct AST
+    {
+        //! The contents of this AST.
+        //!
+        //! Generally, you will want to iterate over each node and call nodeType() on it to determine what kind of node it
+        //! is; once you have retrieved the node type, you can upcast the node to a more appropriate type like FunctionNode
+        //! or EnumNode.
+        std::vector<ASTNode *> nodes;
+
+        //! The source language that this AST is representing.
+        Language language;
+
+        //! The name of the module that this AST represents.
+        std::string moduleName;
+    };
+
+    //! Represents a namespace.
+    //!
+    //! The concept of a namespace is most commonly taught from C++. However, some other languages have similarly powerful
+    //! namespacing features; for example, Rust has a nested modules system that allows for C++-like namespacing. When
+    //! supported, this struct should be handled
+    struct NamespaceNode : public ASTNode
+    {
+        virtual ASTNodeType nodeType() const override;
+
+        //! The name of this namespace.
+        std::string name;
+
+        //! The contents of the namespace.
+        AST ast;
     };
 
     //! QualifiedType holds a Type with any additional qualifiers like "const". In addition, if the type is something like
@@ -253,22 +273,5 @@ namespace polyglot
 
         //! The class methods.
         std::vector<FunctionNode> methods;
-    };
-
-    //! A top-level collection of symbols from a source file. An instance of AST corresponds to precisely one source module.
-    struct AST
-    {
-        //! The contents of this AST.
-        //!
-        //! Generally, you will want to iterate over each node and call nodeType() on it to determine what kind of node it
-        //! is; once you have retrieved the node type, you can upcast the node to a more appropriate type like FunctionNode
-        //! or EnumNode.
-        std::vector<ASTNode *> nodes;
-
-        //! The source language that this AST is representing.
-        Language language;
-
-        //! The name of the module that this AST represents.
-        std::string moduleName;
     };
 } // namespace polyglot

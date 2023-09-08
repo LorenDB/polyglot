@@ -40,20 +40,11 @@ bool CppUtils::isFixedWidthIntegerType(const clang::QualType &type)
     return false;
 }
 
-std::shared_ptr<polyglot::Namespace> CppUtils::buildNamespaceTree(const clang::Decl *decl)
+std::vector<std::string> CppUtils::getNamespaceList(const clang::Decl *decl)
 {
-    if (auto ctx = llvm::dyn_cast_or_null<clang::NamespaceDecl>(decl->getDeclContext()); ctx)
-    {
-        if (ctx->isStdNamespace())
-            throw std::runtime_error("Polyglot currently doesn't support wrapping the C++ STL");
-
-        auto ret = std::make_shared<polyglot::Namespace>();
-        ret->name = ctx->getNameAsString();
-        auto parentNamespace = buildNamespaceTree(ctx);
-        if (parentNamespace != nullptr)
-            ret->parentNamespace = parentNamespace;
-        return ret;
-    }
-    else
-        return nullptr;
+    std::vector<std::string> ret;
+    for (auto ctx = llvm::dyn_cast_or_null<clang::NamespaceDecl>(decl->getDeclContext()); ctx;
+         ctx = llvm::dyn_cast_or_null<clang::NamespaceDecl>(ctx->getDeclContext()))
+        ret.insert(ret.begin(), ctx->getNameAsString());
+    return ret;
 }

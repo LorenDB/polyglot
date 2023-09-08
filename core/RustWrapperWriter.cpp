@@ -41,7 +41,19 @@ void RustWrapperWriter::write(const AST &ast, std::ostream &out)
         }
 
 
-        if (node->nodeType() == ASTNodeType::Function)
+        if (node->nodeType() == ASTNodeType::Namespace)
+        {
+            auto ns = dynamic_cast<NamespaceNode *>(node);
+            if (ns == nullptr)
+                throw std::runtime_error("Node claimed to be NamespaceNode, but cast failed");
+
+            out << std::string(m_indentationDepth, '\t') << "mod " << ns->name << " {\n";
+            ++m_indentationDepth;
+            write(ns->ast, out);
+            --m_indentationDepth;
+            out << std::string(m_indentationDepth, '\t') << "}\n";
+        }
+        else if (node->nodeType() == ASTNodeType::Function)
         {
             auto function = dynamic_cast<FunctionNode *>(node);
             if (function == nullptr)
@@ -199,12 +211,12 @@ std::string RustWrapperWriter::getTypeString(const QualifiedType &type) const
     case Type::Void:
         typeString += "void";
         break;
-        //    case Type::Char:
-        //        typeString += "char";
-        //        break;
-        //    case Type::Char16:
-        //        typeString += "wchar";
-        //        break;
+    case Type::Char:
+        typeString += "u8";// "char";
+        break;
+    case Type::Char16:
+        typeString += "u16";//"wchar";
+        break;
     case Type::Char32:
         typeString += "char";
         break;

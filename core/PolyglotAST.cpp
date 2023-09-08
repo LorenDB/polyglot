@@ -23,3 +23,8 @@ polyglot::ASTNodeType polyglot::ClassNode::nodeType() const
 {
     return ASTNodeType::Class;
 }
+
+polyglot::ASTNodeType polyglot::NamespaceNode::nodeType() const
+{
+    return ASTNodeType::Namespace;
+}

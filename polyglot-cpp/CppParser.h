@@ -41,6 +41,7 @@ public:
 
 private:
     polyglot::QualifiedType typeFromClangType(const clang::QualType &qualType, const clang::Decl *decl) const;
+    void pushNodeToProperNS(polyglot::AST &ast, const clang::Decl *decl, polyglot::ASTNode *node) const;
 
     std::map<std::string, polyglot::AST> m_asts;
 };

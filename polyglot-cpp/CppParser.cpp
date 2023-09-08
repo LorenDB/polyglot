@@ -59,7 +59,6 @@ void CppParser::addFunction(const clang::FunctionDecl *function, const std::stri
     ast.language = polyglot::Language::Cpp;
 
     auto functionNode = new polyglot::FunctionNode;
-    functionNode->cppNamespace = CppUtils::buildNamespaceTree(function);
     functionNode->functionName = function->getNameAsString();
     functionNode->mangledName = mangledName;
     functionNode->returnType = typeFromClangType(function->getReturnType(), function);
@@ -74,7 +73,7 @@ void CppParser::addFunction(const clang::FunctionDecl *function, const std::stri
         functionNode->parameters.push_back(p);
     }
 
-    ast.nodes.push_back(functionNode);
+    pushNodeToProperNS(ast, function, functionNode);
 }
 
 void CppParser::addEnum(const clang::EnumDecl *e, const std::string &filename)
@@ -85,7 +84,6 @@ void CppParser::addEnum(const clang::EnumDecl *e, const std::string &filename)
     ast.language = polyglot::Language::Cpp;
 
     auto enumNode = new polyglot::EnumNode;
-    enumNode->cppNamespace = CppUtils::buildNamespaceTree(e);
     enumNode->enumName = e->getNameAsString();
     for (const auto &enumerator : e->enumerators())
     {
@@ -97,7 +95,7 @@ void CppParser::addEnum(const clang::EnumDecl *e, const std::string &filename)
         enumNode->enumerators.push_back(enumerator2);
     }
 
-    ast.nodes.push_back(enumNode);
+    pushNodeToProperNS(ast, e, enumNode);
 }
 
 void CppParser::addClass(const clang::CXXRecordDecl *classDecl, const std::string &filename)
@@ -108,7 +106,6 @@ void CppParser::addClass(const clang::CXXRecordDecl *classDecl, const std::strin
     ast.language = polyglot::Language::Cpp;
 
     auto classNode = new polyglot::ClassNode;
-    classNode->cppNamespace = CppUtils::buildNamespaceTree(classDecl);
     classNode->name = classDecl->getNameAsString();
     if (classDecl->isClass())
         classNode->type = polyglot::ClassNode::Type::Class;
@@ -177,7 +174,7 @@ void CppParser::addClass(const clang::CXXRecordDecl *classDecl, const std::strin
         classNode->members.push_back(m);
     }
 
-    ast.nodes.push_back(classNode);
+    pushNodeToProperNS(ast, classDecl, classNode);
 }
 
 void CppParser::writeWrappers()
@@ -292,4 +289,32 @@ polyglot::QualifiedType CppParser::typeFromClangType(const clang::QualType &type
         throw std::runtime_error(std::format("Unrecognized type: {}", ret.nameString));
 
     return ret;
+}
+
+void CppParser::pushNodeToProperNS(polyglot::AST &ast, const clang::Decl *decl, polyglot::ASTNode *node) const
+{
+    auto nsList = CppUtils::getNamespaceList(decl);
+    polyglot::AST *astPtr = &ast;
+    int i = 0;
+    for (; i < nsList.size(); ++i)
+    {
+        if (astPtr && !astPtr->nodes.empty() && astPtr->nodes.back()->nodeType() == polyglot::ASTNodeType::Namespace)
+        {
+            if (auto ns = dynamic_cast<polyglot::NamespaceNode *>(astPtr->nodes.back()); ns && nsList[i] == ns->name)
+                astPtr = &ns->ast;
+            else
+                break;
+        }
+        else
+            break;
+    }
+    for (; i < nsList.size(); ++i)
+    {
+        auto ns = new polyglot::NamespaceNode;
+        ns->name = nsList[i];
+        astPtr->nodes.push_back(ns);
+        astPtr = &ns->ast;
+    }
+
+    astPtr->nodes.push_back(node);
 }
