@@ -13,14 +13,32 @@
 
 namespace polyglot
 {
+    //! Generally, this represents the language that an AST has been parsed from. However, there are some other uses for it.
+    //!
+    //! A language's inclusion in this list does not mean that it is fully supported by Polyglot or even that it is supported
+    //! at all. Languages are sometimes added in anticipation of their use to prevent having to modify this enum later.
     enum class Language
     {
+        // These languages have some level of support in Polyglot
         Cpp,
         D,
         Rust,
-        Swift, // not yet supported but currently planned longer-term
+
+        // These languages have planned support, but lack an implementation
+        Swift,
+
+        // Support for these languages is likely possible, but it is uncertain if or when they will recieve implementations
+        Go,
+        Nim,
+        OCaml,
+        Pascal,
+        V,
+        Vala,
+        Zig,
     };
 
+    //! This enum exists to allow you to use ASTNode::nodeType() to detect what an ASTNode actually is so you can upcast it
+    //! to its proper type.
     enum class ASTNodeType
     {
         Function,
@@ -31,6 +49,12 @@ namespace polyglot
         Undefined,
     };
 
+    //! Represents a basic type.
+    //!
+    //! All the basic builtin types are present in this enum, as well as indicators for user-defined types; however, this
+    //! enum is inadequate for actually representing any realistic type information. For that, use the QualifiedType struct,
+    //! which provides information about qualifiers (e.g. const), whether the type is a pointer or array type, and names for
+    //! user defined types.
     enum class Type
     {
         // the main built-in types
@@ -63,9 +87,17 @@ namespace polyglot
         Undefined,
     };
 
+    //! Represents a namespace.
+    //!
+    //! The concept of a namespace is most commonly taught from C++. However, some other languages have similarly powerful
+    //! namespacing features; for example, Rust has a nested modules system that allows for C++-like namespacing. When
+    //! supported, this struct should be handled
     struct Namespace
     {
+        //! A pointer to the parent namespace of this namespace.
         std::shared_ptr<Namespace> parentNamespace;
+
+        //! The name of this namespace.
         std::string name;
     };
 
@@ -83,29 +115,56 @@ namespace polyglot
     //! Enum or Class, QualifiedType will contain information about that type (e.g. an enum name).
     struct QualifiedType
     {
+        //! The base type of the qualified type.
         Type baseType = Type::Undefined;
+
+        //! Whether the type is const.
         bool isConst = false;
+
+        //! Whether the type is a pointer.
         bool isPointer = false;
+
+        //! Whether the type is volatile.
         bool isVolatile = false;
+
+        //! Whether the type is an array.
         bool isArray = false;
+
+        //! Whether the type is a reference.
         bool isReference = false;
+
+        //! Whether the type is an rvalue reference. Mainly useful in C++ move constructors.
         bool isRvalueReference = false;
 
         //! This is only set if baseType is equal to Type::Class or Type::Enum.
         std::string nameString;
     };
 
+    //! A raw value used in an expression (e.g. a default argument).
     struct Value
     {
+        //! The type that this value has.
         Type type;
+
+        //! The actual value.
         std::variant<bool, char, char16_t, char32_t, int64_t, uint64_t, double, std::string> value;
     };
 
+    //! Represents a variable.
+    //!
+    //! This struct can be used for multiple purposes; it can represent global variables, function parameters, or class
+    //! members.
     struct VariableNode : public ASTNode
     {
         virtual ASTNodeType nodeType() const override;
+
+        //! The variable type.
         QualifiedType type;
+
+        //! The variable name.
         std::string name;
+
+        //! If the variable has a value set (e.g. a default argument for a function parameter), this holds that value.
         std::optional<Value> value;
     };
 
@@ -157,12 +216,18 @@ namespace polyglot
         };
 
         virtual ASTNodeType nodeType() const override;
+
+        //! The name of the enum.
         std::string enumName;
+
+        //! The enumerators.
         std::vector<Enumerator> enumerators;
     };
 
     struct ClassNode : public ASTNode
     {
+        //! Represents whether this a a class or a struct. Generally, the class and struct keywords mean more or less the
+        //! same thing, but there are situations in which it can be useful to know how a class was declared.
         enum class Type
         {
             Class,
@@ -170,11 +235,23 @@ namespace polyglot
         };
 
         virtual ASTNodeType nodeType() const override;
+
+        //! The class name.
         std::string name;
+
+        //! Whether this was declared as a class or a struct.
         Type type;
+
+        //! The constructors for this class.
         std::vector<FunctionNode> constructors;
+
+        //! The destructor for this class.
         std::optional<FunctionNode> destructor;
+
+        //! Member variables for the class.
         std::vector<VariableNode> members;
+
+        //! The class methods.
         std::vector<FunctionNode> methods;
     };
 
