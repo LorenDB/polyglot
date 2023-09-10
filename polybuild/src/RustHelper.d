@@ -4,12 +4,12 @@
 
 module rusthelper;
 
-// @safe:
+@safe:
 
 import std.file;
 import std.path;
 
-string getRustStandardLibraryPath()
+@trusted string getRustStandardLibraryPath()
 {
     string[] rustLibDirs = 
         ["/usr/lib64/rustlib/x86_64-unknown-linux-gnu/lib",

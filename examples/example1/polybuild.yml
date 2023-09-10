@@ -1,0 +1,4 @@
+name: example1
+sources:
+    - example1.cpp
+    - main.d

@@ -13,7 +13,7 @@ To get started using Polyglot, you will need to make sure that you have the foll
 - the Rust toolchain (only tested using rustup for now)
 - a D toolchain (currently only ldc2 is supported; this will change in the future)
 
-Then run `./build.sh` from this repository. This will build `polyglot-cpp` (the C++ scanner and binding generator) and `polybuild` (the wrapper build tool) and install them for you. Once installed, you can use Polyglot by running `polybuild [sources-to-compile]`. For example projects to build, see the `tests/` folder in this repository.
+Then run `./build.sh` from this repository. This will build `polyglot-cpp` (the C++ scanner and binding generator) and `polybuild` (the wrapper build tool) and install them for you. Once installed, you can use Polyglot by creating a `polyglot.yml` file and then running `polybuild`. For example projects to build, see the `tests/` folder in this repository. You can learn how to create a `polybuild.yml` file [here](./polybuild/README.md).
 
 ## Operational limitations
 

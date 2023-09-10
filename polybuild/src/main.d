@@ -10,27 +10,14 @@ import std.process;
 import std.file;
 import std.array;
 import std.conv: to;
-import std.logger;
+import std.exception;
+import std.range;
 
 import dyaml;
 
 import rusthelper;
-
-struct Languages
-{
-	bool cpp;
-	bool d;
-	bool rust;
-}
-
-string commandString(string[] parts)
-{
-	assert(parts.length > 0, "You must call commandString() with at least one item");
-	string ret;
-	foreach (part; parts)
-		ret ~= part ~ " ";
-	return ret[0 .. $ - 1];
-}
+import buildfile;
+import wrapsources;
 
 int main(string[] args)
 {
@@ -40,102 +27,75 @@ int main(string[] args)
 		return -1;
 	}
 
-	Node buildfile = Loader.fromFile("polybuild.yml").load();
-	string[] sources;
-	foreach (string source; buildfile["sources"])
-		sources ~= source;
+	Buildfile buildfile = buildfileFromYAML(Loader.fromFile("polybuild.yml").load());
 
+	// ensure all required build directories exist
 	if (!exists("build") || !isDir("build"))
 		mkdir("build");
+	if (!exists("build/pgwrappers") || !isDir("build/pgwrappers"))
+		mkdir("build/pgwrappers");
 
 	int retval;
-	Languages languages;
-
-	string clangIncludePath;
-	{
-		auto task = execute(["clang++", "-print-resource-dir"]);
-		if (task.status != 0)
-		{
-			writeln("Couldn't get clang resource path!");
-			return task.status;
-		}
-		// the output has a trailing \n by default
-		clangIncludePath = task.output[0 .. $ - 1] ~ "/include";
-	}
-
-	writeln("Calling polyglot-cpp on " ~ sources.to!string);
+	string[] objFiles;
 
 	// wrap each file
-	foreach (file; sources)
-	{
-		if (file.endsWith(".cpp") || file.endsWith(".cxx") || file.endsWith(".c++") || file.endsWith(".cc") || file.endsWith(".C"))
-		{
-			languages.cpp = true;
-			retval = spawnProcess(["polyglot-cpp", file, "--", "-isystem", clangIncludePath]).wait();
-		}
+	writeln("Wrapping " ~ buildfile.sources.to!string);
+	foreach (file; buildfile.sources)
+		buildfile.generatedSources ~= wrapFile(file);
 
-		// TODO: these don't exist yet :(
-		else if (file.endsWith(".d"))
-		{
-			languages.d = true;
-			// retval = spawnProcess(["polyglot-d", file]).wait();
-		}
-		else if (file.endsWith(".rs"))
-		{
-			languages.rust = true;
-			// retval = spawnProcess(["polyglot-rs", file]).wait();
-		}
-
-		if (retval != 0)
-			return retval;
-	}
-
-	writeln("Compiling " ~ sources.to!string);
-	
 	// compile each file
-	foreach (file; sources)
+	writeln("Compiling " ~ buildfile.allSources.to!string);
+	if (buildfile.allSources.languages.cpp)
 	{
-		string objFile = "build/" ~ file ~ ".o";
-
-		if (file.endsWith(".cpp") || file.endsWith(".cxx") || file.endsWith(".c++") || file.endsWith(".cc") || file.endsWith(".C"))
+		foreach (file; buildfile.allSourcesPlusWrappers.cppSources)
 		{
+			string objFile = "build/" ~ file ~ ".o";
 			auto command = ["clang++", file, "-c", "-o", objFile];
-			writeln("Executing " ~ commandString(command));
+			writeln("Executing " ~ command.join(' '));
 			retval = spawnProcess(command).wait();
 			if (retval != 0)
 				return retval;
+
+			objFiles ~= objFile;
 
 			// TODO: add option to generate assembly; the following comment contains code for that
 			// spawnProcess(["clang++", "-S", file, "-o", file ~ ".s"]);
 		}
-		else if (file.endsWith(".rs"))
+	}
+
+	if (buildfile.allSources.languages.rust)
+	{
+		foreach (file; buildfile.allSourcesPlusWrappers.rustSources)
 		{
-			auto command = ["rustc", file, "--emit", "obj", "-o", objFile];
-			writeln("Executing " ~ commandString(command));
+			string objFile = "build/" ~ file ~ ".o";
+			auto command = ["rustc", file, "--emit", "obj", "-L", "build/pgwrappers", "-o", objFile];
+			writeln("Executing " ~ command.join(' '));
 			retval = spawnProcess(command).wait();
 			if (retval != 0)
-				return retval;
+					return retval;
+
+			objFiles ~= objFile;
 		}
 	}
 
-	// D wants to compile all the D files in one go, so we'll just do that now.
-	string[] dFiles;
-	foreach(fileEntry; dirEntries("", "*.d", SpanMode.depth))
-		dFiles ~= fileEntry;
+	if (buildfile.allSources.languages.d)
+	{
+		// D wants to compile all the D files in one go, so we'll just do that now.
+		string[] dFiles;
+		foreach(fileEntry; chain(buildfile.allSourcesPlusWrappers.dSources))
+			dFiles ~= fileEntry;
 
-	auto command = ["ldc2"] ~ dFiles.sort.uniq.array ~ ["-c", "-of", "build/d_monolithic_obj_file.o"];
-	writeln("Executing " ~ commandString(command));
-	retval = spawnProcess(command).wait();
-	// TODO: more assembly generation
-	// spawnProcess(["ldc2"] ~ dFiles.sort.uniq.array ~ ["--output-s"]);
+		auto command = ["ldc2"] ~ dFiles.sort.uniq.array ~ ["-c", "-of", "build/d_monolithic_obj_file.o"];
+		writeln("Executing " ~ command.join(' '));
+		retval = spawnProcess(command).wait();
+		// TODO: more assembly generation
+		// spawnProcess(["ldc2"] ~ dFiles.sort.uniq.array ~ ["--output-s"]);
 
-	if (retval != 0)
-		return retval;
+		if (retval != 0)
+			return retval;
 
-	// link the whole shebang together
-	string[] objFiles;
-	foreach (fileEntry; dirEntries("build", "*.o", SpanMode.depth))
-		objFiles ~= fileEntry;
+		objFiles ~= "build/d_monolithic_obj_file.o";
+	}
 
 	writeln("Linking " ~ objFiles.sort.uniq.array.to!string);
 	retval = spawnProcess(["clang++"] ~ objFiles.sort.uniq.array ~ 
@@ -143,7 +103,7 @@ int main(string[] args)
 				"-ldruntime-ldc-shared",
 				getRustStandardLibraryPath(),
 				"-o", 
-				"build/main"]
+				"build/" ~ buildfile.projectName]
 			 ).wait();
 
 	return retval;

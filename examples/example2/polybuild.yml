@@ -1,0 +1,4 @@
+name: example2
+sources:
+    - example2.cpp
+    - main.rs

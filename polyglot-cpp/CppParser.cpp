@@ -181,10 +181,10 @@ void CppParser::writeWrappers()
 {
     for (const auto &[moduleName, ast] : m_asts)
     {
-        std::ofstream dFile{"build/" + moduleName + ".d"};
+        std::ofstream dFile{"build/pgwrappers/" + moduleName + ".d"};
         DWrapperWriter dWrapper;
         dWrapper.write(ast, dFile);
-        std::ofstream rustFile{"build/" + moduleName + ".rs"};
+        std::ofstream rustFile{"build/pgwrappers/" + moduleName + ".rs"};
         RustWrapperWriter rustWrapper;
         rustWrapper.write(ast, rustFile);
     }
