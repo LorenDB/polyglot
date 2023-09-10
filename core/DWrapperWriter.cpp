@@ -41,7 +41,6 @@ module {};
         if (ast.language == Language::Cpp)
             out << "extern(C++):\n";
     }
-
     ++s_onlyWriteHeaderOnce;
     out << "\n";
 

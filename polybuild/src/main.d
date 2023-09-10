@@ -14,18 +14,23 @@ import std.exception;
 import std.range;
 
 import dyaml;
+import argparse;
 
 import rusthelper;
 import buildfile;
 import wrapsources;
 
+struct PolybuildOptions
+{
+	@(NamedArgument(["v", "verbose"]).Description("Use verbose output"))
+	bool verbose;
+}
+
 int main(string[] args)
 {
-	if (args.length > 1)
-	{
-		writeln("Polybuild currently does not take any arguments!");
-		return -1;
-	}
+	PolybuildOptions options;
+	if (!CLI!PolybuildOptions.parseArgs(options, args[1 .. $]))
+		return 1;
 
 	Buildfile buildfile = buildfileFromYAML(Loader.fromFile("polybuild.yml").load());
 
@@ -39,19 +44,21 @@ int main(string[] args)
 	string[] objFiles;
 
 	// wrap each file
-	writeln("Wrapping " ~ buildfile.sources.to!string);
-	foreach (file; buildfile.sources)
-		buildfile.generatedSources ~= wrapFile(file);
+	if (options.verbose)
+		writeln("Wrapping " ~ buildfile.sources.to!string);
+	buildfile.generatedSources = wrapFiles(buildfile.sources);
 
 	// compile each file
-	writeln("Compiling " ~ buildfile.allSources.to!string);
+	if (options.verbose)
+		writeln("Compiling " ~ buildfile.allSources.to!string);
 	if (buildfile.allSources.languages.cpp)
 	{
 		foreach (file; buildfile.allSourcesPlusWrappers.cppSources)
 		{
 			string objFile = "build/" ~ file ~ ".o";
 			auto command = ["clang++", file, "-c", "-o", objFile];
-			writeln("Executing " ~ command.join(' '));
+			if (options.verbose)
+				writeln("Executing " ~ command.join(' '));
 			retval = spawnProcess(command).wait();
 			if (retval != 0)
 				return retval;
@@ -65,11 +72,38 @@ int main(string[] args)
 
 	if (buildfile.allSources.languages.rust)
 	{
-		foreach (file; buildfile.allSourcesPlusWrappers.rustSources)
+		// Rust does *not* like looking for dependencies in a separate build directory, so we'll
+		// temporarily copy the wrappers into the source tree (and immediately remove them afterward!)
+
+		// We'll start by building a list of the files we need to copy.
+		Sources wrappersInBuildTree;
+		enum buildDirPrefix = "build/pgwrappers/";
+		foreach (file; buildfile.generatedSources.rustSources)
+		{
+			if (!file.startsWith(buildDirPrefix))
+				continue;
+			wrappersInBuildTree ~= file[buildDirPrefix.length .. $];
+		}
+
+		// Now we copy them into the source tree...
+		foreach (wrapper; wrappersInBuildTree)
+		{
+			if (wrapper.exists)
+				throw new Exception("Couldn't copy wrapper into build tree");
+			copy(buildDirPrefix ~ wrapper, wrapper);
+		}
+
+		// ...make sure they will be deleted no matter what...
+		scope(exit) foreach(wrapper; wrappersInBuildTree)
+			wrapper.remove();
+
+		// ..and compile them.
+		foreach (file; buildfile.allSources.rustSources)
 		{
 			string objFile = "build/" ~ file ~ ".o";
-			auto command = ["rustc", file, "--emit", "obj", "-L", "build/pgwrappers", "-o", objFile];
-			writeln("Executing " ~ command.join(' '));
+			auto command = ["rustc", file, "--emit", "obj", "-o", objFile];
+			if (options.verbose)
+				writeln("Executing " ~ command.join(' '));
 			retval = spawnProcess(command).wait();
 			if (retval != 0)
 					return retval;
@@ -86,7 +120,8 @@ int main(string[] args)
 			dFiles ~= fileEntry;
 
 		auto command = ["ldc2"] ~ dFiles.sort.uniq.array ~ ["-c", "-of", "build/d_monolithic_obj_file.o"];
-		writeln("Executing " ~ command.join(' '));
+		if (options.verbose)
+			writeln("Executing " ~ command.join(' '));
 		retval = spawnProcess(command).wait();
 		// TODO: more assembly generation
 		// spawnProcess(["ldc2"] ~ dFiles.sort.uniq.array ~ ["--output-s"]);
@@ -97,7 +132,8 @@ int main(string[] args)
 		objFiles ~= "build/d_monolithic_obj_file.o";
 	}
 
-	writeln("Linking " ~ objFiles.sort.uniq.array.to!string);
+	if (options.verbose)
+		writeln("Linking " ~ objFiles.sort.uniq.array.to!string);
 	retval = spawnProcess(["clang++"] ~ objFiles.sort.uniq.array ~ 
 				["-lphobos2-ldc-shared",
 				"-ldruntime-ldc-shared",

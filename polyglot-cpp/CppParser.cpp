@@ -42,7 +42,9 @@ polyglot::Value getExprValue(const clang::Expr *defaultValue, const clang::ASTCo
     return ret;
 }
 
-CppParser::CppParser() {}
+CppParser::CppParser(std::vector<polyglot::Language> languages)
+    : m_langs{languages}
+{}
 
 void CppParser::addFunction(const clang::FunctionDecl *function, const std::string &filename)
 {
@@ -181,12 +183,18 @@ void CppParser::writeWrappers()
 {
     for (const auto &[moduleName, ast] : m_asts)
     {
-        std::ofstream dFile{"build/pgwrappers/" + moduleName + ".d"};
-        DWrapperWriter dWrapper;
-        dWrapper.write(ast, dFile);
-        std::ofstream rustFile{"build/pgwrappers/" + moduleName + ".rs"};
-        RustWrapperWriter rustWrapper;
-        rustWrapper.write(ast, rustFile);
+        if (std::find(m_langs.begin(), m_langs.end(), polyglot::Language::D) != m_langs.end())
+        {
+            std::ofstream dFile{"build/pgwrappers/" + moduleName + ".d"};
+            DWrapperWriter dWrapper;
+            dWrapper.write(ast, dFile);
+        }
+        if (std::find(m_langs.begin(), m_langs.end(), polyglot::Language::Rust) != m_langs.end())
+        {
+            std::ofstream rustFile{"build/pgwrappers/" + moduleName + ".rs"};
+            RustWrapperWriter rustWrapper;
+            rustWrapper.write(ast, rustFile);
+        }
     }
 }
 

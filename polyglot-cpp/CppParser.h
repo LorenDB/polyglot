@@ -31,7 +31,7 @@ struct BindingFile
 class CppParser
 {
 public:
-    CppParser();
+    CppParser(std::vector<polyglot::Language> languages = {});
 
     void addFunction(const clang::FunctionDecl *function, const std::string &filename);
     void addEnum(const clang::EnumDecl *e, const std::string &filename);
@@ -44,11 +44,16 @@ private:
     void pushNodeToProperNS(polyglot::AST &ast, const clang::Decl *decl, polyglot::ASTNode *node) const;
 
     std::map<std::string, polyglot::AST> m_asts;
+    std::vector<polyglot::Language> m_langs;
 };
 
 class PolyglotVisitor : public clang::ast_matchers::MatchFinder::MatchCallback
 {
 public:
+    PolyglotVisitor(std::vector<polyglot::Language> languages = {})
+        : m_generator{languages}
+    {}
+
     virtual void run(const clang::ast_matchers::MatchFinder::MatchResult &result)
     {
         if (const clang::FunctionDecl *function = result.Nodes.getNodeAs<clang::FunctionDecl>("function"))

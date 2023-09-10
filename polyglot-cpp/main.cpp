@@ -22,7 +22,16 @@ DeclarationMatcher classMatcher = cxxRecordDecl(unless(isImplicit())).bind("clas
 
 static llvm::cl::OptionCategory polyglotOptions("polyglot options");
 static llvm::cl::extrahelp commonHelp(CommonOptionsParser::HelpMessage);
-// static llvm::cl::extrahelp extendedHelp("\nMore help text...\n");
+static llvm::cl::list<polyglot::Language> languages{"lang",
+                                                    llvm::cl::desc{"A list of languages to output wrappers for. If "
+                                                                   "unset, all supported languages will be "
+                                                                   "generated."},
+                                                    llvm::cl::values(clEnumValN(polyglot::Language::Cpp, "cpp", "C++"),
+                                                                     clEnumValN(polyglot::Language::D, "d", "D"),
+                                                                     clEnumValN(polyglot::Language::Rust, "rust", "Rust")),
+//                                                    llvm::cl::list_init(polyglot::Language::D, polyglot::Language::Rust),
+                                                    llvm::cl::ZeroOrMore,
+                                                    llvm::cl::cat(polyglotOptions)};
 
 int main(int argc, const char **argv)
 {
@@ -36,7 +45,13 @@ int main(int argc, const char **argv)
     CommonOptionsParser &optionsParser = expectedParser.get();
     ClangTool tool(optionsParser.getCompilations(), optionsParser.getSourcePathList());
 
-    PolyglotVisitor visitor;
+    std::vector<polyglot::Language> langs;
+    for (const auto &l : languages)
+        langs.push_back(l);
+    if (langs.size() == 0)
+        langs = {polyglot::Language::D, polyglot::Language::Rust};
+
+    PolyglotVisitor visitor{langs};
     MatchFinder finder;
     finder.addMatcher(functionMatcher, &visitor);
     finder.addMatcher(enumMatcher, &visitor);

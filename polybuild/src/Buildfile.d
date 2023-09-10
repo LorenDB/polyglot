@@ -7,6 +7,8 @@ import std.array;
 
 import dyaml;
 
+import cpphelper;
+
 struct Languages
 {
 	bool cpp;
@@ -16,24 +18,24 @@ struct Languages
 
 struct Sources
 {
-    string[] _allSources;
-    alias _allSources this;
+    string[] _sources;
+    alias _sources this;
 
-    this(string[] s) { _allSources = s; }
+    this(string[] s) { _sources = s; }
 
     string[] cppSources()
     {
-        return _allSources.filter!(file => file.endsWith(".cpp") || file.endsWith(".cxx") || file.endsWith(".c++") || file.endsWith(".cc") || file.endsWith(".C")).array;
+        return _sources.filter!(file => file.isCppFile).array;
     }
 
     string[] dSources()
     {
-        return _allSources.filter!(file => file.endsWith(".d")).array;
+        return _sources.filter!(file => file.endsWith(".d")).array;
     }
 
     string[] rustSources()
     {
-        return _allSources.filter!(file => file.endsWith(".rs")).array;
+        return _sources.filter!(file => file.endsWith(".rs")).array;
     }
 
     Languages languages()
