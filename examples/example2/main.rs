@@ -25,7 +25,7 @@ fn main()
 		example2::checkMyFoo(example2::MyFoo::Foobar);
 
 		// 4. Namespaces
-		example2::foo();
+		example2::Example2::foo();
 
 		// 5. Classes/structs
 		let f3 = example2::Foo3{i: 42};
