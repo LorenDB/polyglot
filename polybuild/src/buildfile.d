@@ -15,9 +15,9 @@ import polybuild.cpphelper;
 
 struct Languages
 {
-	bool cpp;
-	bool d;
-	bool rust;
+    bool cpp;
+    bool d;
+    bool rust;
 }
 
 struct Sources
@@ -25,7 +25,10 @@ struct Sources
     string[] _sources;
     alias _sources this;
 
-    this(string[] s) { _sources = s; }
+    this(string[] s)
+    {
+        _sources = s;
+    }
 
     string[] cppSources()
     {
@@ -77,12 +80,12 @@ struct Buildfile
 Buildfile buildfileFromYAML(Node yaml)
 {
     Buildfile b;
-	b.projectName = yaml["name"].as!string;
-	foreach (string source; yaml["sources"])
-		b.sources ~= source;
-	if (yaml.containsKey("exclude-wrapping"))
-		foreach (string source; yaml["exclude-wrapping"])
-			b.nonWrappingSources ~= source;
+    b.projectName = yaml["name"].as!string;
+    foreach (string source; yaml["sources"])
+        b.sources ~= source;
+    if (yaml.containsKey("exclude-wrapping"))
+        foreach (string source; yaml["exclude-wrapping"])
+            b.nonWrappingSources ~= source;
 
     return b;
 }

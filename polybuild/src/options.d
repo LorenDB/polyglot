@@ -10,25 +10,26 @@ enum PolybuildAction
 {
     NoAction,
 
-	Build,
-	Run,
+    Build,
+    Run,
 }
 
 @(Command("build").ShortDescription("Build the project"))
-struct BuildAction {}
+struct BuildAction
+{
+}
 
 @(Command("run").ShortDescription("Build and run the project"))
 struct RunAction
 {
-	@(NamedArgument("skip-build").Description("Run the executable without building"))
-	bool skipBuild;
+    @(NamedArgument("skip-build").Description("Run the executable without building"))
+    bool skipBuild;
 }
 
 struct PolybuildOptions
 {
-	@(NamedArgument(["v", "verbose"]).Description("Use verbose output"))
-	bool verbose;
+    @(NamedArgument(["v", "verbose"]).Description("Use verbose output"))
+    bool verbose;
 
-    @SubCommands
-	SumType!(BuildAction, RunAction) command;
+    @SubCommands SumType!(BuildAction, RunAction) command;
 }

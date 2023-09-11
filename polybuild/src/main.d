@@ -16,32 +16,29 @@ import polybuild.buildfile;
 
 int main(string[] args)
 {
-	PolybuildOptions options;
-	if (!CLI!PolybuildOptions.parseArgs(options, args[1 .. $]))
-		return 1;
+    PolybuildOptions options;
+    if (!CLI!PolybuildOptions.parseArgs(options, args[1 .. $]))
+        return 1;
 
-	return options.command.match!(
-		(.BuildAction) {
-			Buildfile buildfile = buildfileFromYAML(Loader.fromFile("polybuild.yml").load());
-			return buildApp(buildfile, options);
-		},
-		(.RunAction r) {
-			Buildfile buildfile = buildfileFromYAML(Loader.fromFile("polybuild.yml").load());
+    return options.command.match!((.BuildAction) {
+        Buildfile buildfile = buildfileFromYAML(Loader.fromFile("polybuild.yml").load());
+        return buildApp(buildfile, options);
+    }, (.RunAction r) {
+        Buildfile buildfile = buildfileFromYAML(Loader.fromFile("polybuild.yml").load());
 
-			if (!r.skipBuild)
-			{
-				int retval = buildApp(buildfile, options);
-				if (retval != 0)
-					return retval;
-			}
+        if (!r.skipBuild)
+        {
+            int retval = buildApp(buildfile, options);
+            if (retval != 0)
+                return retval;
+        }
 
-			if (!exists("./build/" ~ buildfile.projectName))
-			{
-				stderr.writeln("You must build " ~ buildfile.projectName ~ " before running it");
-				return 1;
-			}
-			else
-				return spawnProcess("./build/" ~ buildfile.projectName).wait();
-		}
-	);
+        if (!exists("./build/" ~ buildfile.projectName))
+        {
+            stderr.writeln("You must build " ~ buildfile.projectName ~ " before running it");
+            return 1;
+        }
+        else
+            return spawnProcess("./build/" ~ buildfile.projectName).wait();
+    });
 }

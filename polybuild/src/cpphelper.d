@@ -20,7 +20,8 @@ string clangIncludePath()
 
 bool isCppFile(string file)
 {
-    return file.endsWith(".cpp") || file.endsWith(".cxx") || file.endsWith(".c++") || file.endsWith(".cc") || file.endsWith(".C");
+    return file.endsWith(".cpp") || file.endsWith(".cxx")
+        || file.endsWith(".c++") || file.endsWith(".cc") || file.endsWith(".C");
 }
 
 string getCppFileBasename(string file)
