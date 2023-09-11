@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0
 
-module buildfile;
+module polybuild.buildfile;
 
 @safe:
 
@@ -11,7 +11,7 @@ import std.array;
 
 import dyaml;
 
-import cpphelper;
+import polybuild.cpphelper;
 
 struct Languages
 {

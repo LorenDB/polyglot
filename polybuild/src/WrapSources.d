@@ -2,15 +2,15 @@
 //
 // SPDX-License-Identifier: GPL-3.0
 
-module wrapsources;
+module polybuild.wrapsources;
 
 @safe:
 
 import std.algorithm;
 import std.process;
 
-import buildfile;
-import cpphelper;
+import polybuild.buildfile;
+import polybuild.cpphelper;
 
 string[] wrapFiles(Sources sources)
 {
