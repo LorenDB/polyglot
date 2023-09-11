@@ -19,6 +19,8 @@ sources:
 exclude-wrapping:
   - internalhelper.d
   - otherhelper.rs
+# If you want to keep the generated wrappers directly in your source tree, use this option.
+keep-wrappers: true
 ```
 
 ## Building a polybuild project

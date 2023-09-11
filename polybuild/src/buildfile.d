@@ -66,6 +66,8 @@ struct Buildfile
     Sources nonWrappingSources;
     Sources generatedSources;
 
+    bool keepWrappers;
+
     Sources allSources()
     {
         return Sources(sources ~ nonWrappingSources);
@@ -86,6 +88,8 @@ Buildfile buildfileFromYAML(Node yaml)
     if (yaml.containsKey("exclude-wrapping"))
         foreach (string source; yaml["exclude-wrapping"])
             b.nonWrappingSources ~= source;
+    if (yaml.containsKey("keep-wrappers"))
+        b.keepWrappers = yaml["keep-wrappers"].as!bool;
 
     return b;
 }

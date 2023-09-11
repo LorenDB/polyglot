@@ -73,15 +73,17 @@ int buildApp(ref Buildfile buildfile, ref PolybuildOptions options)
         // Now we copy them into the source tree...
         foreach (wrapper; wrappersInBuildTree)
         {
-            if (wrapper.exists)
-                throw new Exception("Couldn't copy wrapper into build tree");
+            // TODO: this doesn't work if we are keeping wrappers
+            // if (wrapper.exists)
+            //     throw new Exception("Couldn't copy wrapper into build tree");
             copy(buildDirPrefix ~ wrapper, wrapper);
         }
 
-        // ...make sure they will be deleted no matter what...
+        // ...if needed, make sure they will be deleted no matter what...
         scope (exit)
-            foreach (wrapper; wrappersInBuildTree)
-                wrapper.remove();
+            if (!buildfile.keepWrappers)
+                foreach (wrapper; wrappersInBuildTree)
+                    wrapper.remove();
 
         // ..and compile them.
         foreach (file; buildfile.allSources.rustSources)
