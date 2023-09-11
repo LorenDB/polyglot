@@ -30,10 +30,11 @@ static llvm::cl::list<polyglot::Language> languages{
     llvm::cl::values(clEnumValN(polyglot::Language::Cpp, "cpp", "C++"),
                      clEnumValN(polyglot::Language::D, "d", "D"),
                      clEnumValN(polyglot::Language::Rust, "rust", "Rust")),
-    //                                                    llvm::cl::list_init(polyglot::Language::D,
-    //                                                    polyglot::Language::Rust),
     llvm::cl::ZeroOrMore,
     llvm::cl::cat(polyglotOptions)};
+static llvm::cl::opt<std::string> outputDir{"output-dir",
+                                            llvm::cl::desc{"The directory to output wrappers into. By default, this is set "
+                                                           "to the current directory."}};
 
 int main(int argc, const char **argv)
 {
@@ -53,7 +54,10 @@ int main(int argc, const char **argv)
     if (langs.size() == 0)
         langs = {polyglot::Language::D, polyglot::Language::Rust};
 
-    PolyglotVisitor visitor{langs};
+    std::string outdir = outputDir.getValue();
+    if (!outdir.ends_with('/'))
+        outdir += '/';
+    PolyglotVisitor visitor{langs, outdir};
     MatchFinder finder;
     finder.addMatcher(functionMatcher, &visitor);
     finder.addMatcher(enumMatcher, &visitor);

@@ -22,8 +22,12 @@ int buildApp(ref Buildfile buildfile, ref PolybuildOptions options)
     // ensure all required build directories exist
     if (!exists("build") || !isDir("build"))
         mkdir("build");
+
+    if (buildfile.keepWrappers)
     if (!exists("build/pgwrappers") || !isDir("build/pgwrappers"))
         mkdir("build/pgwrappers");
+
+    immutable outDir = buildfile.keepWrappers ? "." : "build/pgwrappers";
 
     int retval;
     string[] objFiles;
@@ -31,7 +35,7 @@ int buildApp(ref Buildfile buildfile, ref PolybuildOptions options)
     // wrap each file
     if (options.verbose)
         writeln("Wrapping " ~ buildfile.sources.to!string);
-    buildfile.generatedSources = wrapFiles(buildfile.sources);
+    buildfile.generatedSources = wrapFiles(buildfile.sources, outDir);
 
     // compile each file
     if (options.verbose)

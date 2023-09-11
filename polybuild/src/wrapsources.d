@@ -12,7 +12,7 @@ import std.process;
 import polybuild.buildfile;
 import polybuild.cpphelper;
 
-string[] wrapFiles(Sources sources)
+string[] wrapFiles(Sources sources, string outdir)
 {
     string[] ret;
     auto langs = sources.languages;
@@ -25,14 +25,14 @@ string[] wrapFiles(Sources sources)
                 command ~= ["--lang", "d"];
             if (langs.rust)
                 command ~= ["--lang", "rust"];
-            command ~= ["--", "-isystem", clangIncludePath];
+            command ~= ["--output-dir", outdir, "--", "-isystem", clangIncludePath];
             if (spawnProcess(command).wait() != 0)
                 throw new Exception("polyglot-cpp failed");
 
             if (langs.d)
-                ret ~= ["build/pgwrappers/" ~ file.getCppFileBasename ~ ".d"];
+                ret ~= [outdir ~ '/' ~ file.getCppFileBasename ~ ".d"];
             if (langs.rust)
-                ret ~= ["build/pgwrappers/" ~ file.getCppFileBasename ~ ".rs"];
+                ret ~= [outdir ~ '/' ~ file.getCppFileBasename ~ ".rs"];
         }
 
         // TODO: these don't exist yet :(

@@ -31,7 +31,7 @@ struct BindingFile
 class CppParser
 {
 public:
-    CppParser(std::vector<polyglot::Language> languages = {});
+    CppParser(std::vector<polyglot::Language> languages = {}, std::string outputDir = {});
 
     void addFunction(const clang::FunctionDecl *function, const std::string &filename);
     void addEnum(const clang::EnumDecl *e, const std::string &filename);
@@ -45,13 +45,14 @@ private:
 
     std::map<std::string, polyglot::AST> m_asts;
     std::vector<polyglot::Language> m_langs;
+    std::string m_outputDir;
 };
 
 class PolyglotVisitor : public clang::ast_matchers::MatchFinder::MatchCallback
 {
 public:
-    PolyglotVisitor(std::vector<polyglot::Language> languages = {})
-        : m_generator{languages}
+    PolyglotVisitor(std::vector<polyglot::Language> languages = {}, std::string outputDir = {})
+        : m_generator{languages, outputDir}
     {}
 
     virtual void run(const clang::ast_matchers::MatchFinder::MatchResult &result)
