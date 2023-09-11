@@ -39,6 +39,10 @@ int main(string[] args)
             return 1;
         }
         else
+        {
+            if (options.verbose)
+                writeln("Running build/" ~ buildfile.projectName ~ "...");
             return spawnProcess("./build/" ~ buildfile.projectName).wait();
+        }
     });
 }
