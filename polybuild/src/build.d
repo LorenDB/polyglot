@@ -23,9 +23,9 @@ int buildApp(ref Buildfile buildfile, ref PolybuildOptions options)
     if (!exists("build") || !isDir("build"))
         mkdir("build");
 
-    if (buildfile.keepWrappers)
-    if (!exists("build/pgwrappers") || !isDir("build/pgwrappers"))
-        mkdir("build/pgwrappers");
+    if (!buildfile.keepWrappers)
+        if (!exists("build/pgwrappers") || !isDir("build/pgwrappers"))
+            mkdir("build/pgwrappers");
 
     immutable outDir = buildfile.keepWrappers ? "." : "build/pgwrappers";
 

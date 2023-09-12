@@ -15,43 +15,34 @@ import polybuild.cpphelper;
 string[] wrapFiles(Sources sources, string outdir)
 {
     string[] ret;
-    auto langs = sources.languages;
-    foreach (file; sources)
-    {
-        if (file.isCppFile)
-        {
-            auto command = ["polyglot-cpp", file];
-            if (langs.d)
-                command ~= ["--lang", "d"];
-            if (langs.rust)
-                command ~= ["--lang", "rust"];
-            command ~= ["--output-dir", outdir, "--", "-isystem", clangIncludePath];
-            if (spawnProcess(command).wait() != 0)
-                throw new Exception("polyglot-cpp failed");
 
-            if (langs.d)
+    {
+        auto command = ["polyglot-cpp"] ~ sources.cppSources;
+        if (sources.languages.d)
+            command ~= ["--lang", "d"];
+        if (sources.languages.rust)
+            command ~= ["--lang", "rust"];
+        command ~= ["--output-dir", outdir, "--", "-isystem", clangIncludePath];
+        if (spawnProcess(command).wait() != 0)
+            throw new Exception("polyglot-cpp failed");
+
+        foreach (file; sources.cppSources)
+        {
+            if (sources.languages.d)
                 ret ~= [outdir ~ '/' ~ file.getCppFileBasename ~ ".d"];
-            if (langs.rust)
+            if (sources.languages.rust)
                 ret ~= [outdir ~ '/' ~ file.getCppFileBasename ~ ".rs"];
         }
-
-        // TODO: these don't exist yet :(
-        else if (file.endsWith(".d"))
-        {
-            // if (spawnProcess(["polyglot-d", file]).wait() != 0)
-            //     throw new Exception("polyglot-d failed");
-
-            // ret ~= ["build/pgwrappers/" ~ file[0 .. $ - 2] ~ ".h", "build/pgwrappers/" ~ file[0 .. $ - 2] ~ ".rs"];
-        }
-        else if (file.endsWith(".rs"))
-        {
-            // if (spawnProcess(["polyglot-rs", file]).wait() != 0)
-            //     throw new Exception("polyglot-rs failed");
-
-            // ret ~= ["build/pgwrappers/" ~ file[0 .. $ - 3] ~ ".h", "build/pgwrappers/" ~ file[0 .. $ - 3] ~ ".d"];
-        }
-        else
-            throw new Exception("Couldn't identify file type: " ~ file);
     }
+
+    // TODO: these don't exist yet :(
+    foreach (file; sources.dSources)
+    {
+    }
+
+    foreach (file; sources.rustSources)
+    {
+    }
+
     return ret;
 }
