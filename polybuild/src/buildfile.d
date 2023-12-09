@@ -18,6 +18,7 @@ struct Languages
     bool cpp;
     bool d;
     bool rust;
+    bool zig;
 }
 
 struct Sources
@@ -45,6 +46,11 @@ struct Sources
         return _sources.filter!(file => file.endsWith(".rs")).array;
     }
 
+    string[] zigSources()
+    {
+        return _sources.filter!(file => file.endsWith(".zig")).array;
+    }
+
     Languages languages()
     {
         Languages ret;
@@ -54,6 +60,8 @@ struct Sources
             ret.d = true;
         if (rustSources.length > 0)
             ret.rust = true;
+        if (zigSources.length > 0)
+            ret.zig = true;
 
         return ret;
     }

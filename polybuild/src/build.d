@@ -10,6 +10,7 @@ import std.stdio;
 import std.algorithm;
 import std.process;
 import std.file;
+import std.path : baseName, stripExtension;
 import std.array;
 import std.conv : to;
 import std.exception;
@@ -132,12 +133,45 @@ int buildApp(ref Buildfile buildfile, ref PolybuildOptions options)
         objFiles ~= "build/d_monolithic_obj_file.o";
     }
 
+    if (buildfile.allSources.languages.zig)
+    {
+        Sources ZigModules;
+        enum buildDirPrefix = "build/pgwrappers/";
+        foreach (file; buildfile.generatedSources.zigSources)
+        {
+            if (!file.startsWith(buildDirPrefix))
+                continue;
+            ZigModules ~= file[buildDirPrefix.length .. $];
+        }
+        string moduleName = ZigModules[0];
+        foreach (file; buildfile.allSources.zigSources)
+        {
+            string objFile = "build/zig_" ~ file ~ ".o";
+            // fcompiler-rt - zig have own compiler-rt (LLVM-compiler-rt rewritten on Zig [stage2])
+            // replacing stack-protector to zig-stack-protector
+            auto command = ["zig", "build-obj", file, "-fcompiler-rt", "-lc++", "-femit-bin=" ~ objFile, "--mod", baseName(stripExtension(moduleName)) ~ "::" ~ buildDirPrefix ~ moduleName, "--deps", baseName(stripExtension(moduleName))];
+            if (options.verbose)
+                writeln("Executing " ~ command.join(' '));
+            retval = spawnProcess(command).wait();
+            if (retval != 0)
+                return retval;
+
+            objFiles ~= objFile;
+        }
+    }
+
     if (options.verbose)
         writeln("Linking " ~ objFiles.sort.uniq.array.to!string);
+    if (buildfile.allSources.languages.d)
+        objFiles ~= [
+            "-lphobos2-ldc-shared", "-ldruntime-ldc-shared",
+        ];
+    if (buildfile.allSources.languages.rust)
+        objFiles ~= [
+            getRustStandardLibraryPath()
+        ];
     retval = spawnProcess(["clang++"] ~ objFiles.sort.uniq.array ~ [
-        "-lphobos2-ldc-shared", "-ldruntime-ldc-shared",
-        getRustStandardLibraryPath(), "-o", "build/" ~ buildfile.projectName
-    ]).wait();
-
+            "-o", "build/" ~ buildfile.projectName
+        ]).wait();
     return retval;
 }

@@ -60,6 +60,9 @@ CMakeLists.txt.user*
 *.vcxproj
 *vcxproj.*
 
+# clangd
+.cache/
+
 # MinGW generated files
 *.Debug
 *.Release
@@ -74,6 +77,11 @@ CMakeLists.txt.user*
 
 # Build dirs
 build*/
+zig-*/
+target/
+
+# Cargo ignore
+polyglot-rs/Cargo.lock
 
 # Dub's ignores
 .dub

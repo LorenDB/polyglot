@@ -22,15 +22,17 @@ DeclarationMatcher classMatcher = cxxRecordDecl(unless(isImplicit())).bind("clas
 
 static llvm::cl::OptionCategory polyglotOptions("polyglot options");
 static llvm::cl::extrahelp commonHelp(CommonOptionsParser::HelpMessage);
-static llvm::cl::list<polyglot::Language> languages{"lang",
-                                                    llvm::cl::desc{"A list of languages to output wrappers for. If "
-                                                                   "unset, all supported languages will be "
-                                                                   "generated."},
-                                                    llvm::cl::values(clEnumValN(polyglot::Language::Cpp, "cpp", "C++"),
-                                                                     clEnumValN(polyglot::Language::D, "d", "D"),
-                                                                     clEnumValN(polyglot::Language::Rust, "rust", "Rust")),
-                                                    llvm::cl::ZeroOrMore,
-                                                    llvm::cl::cat(polyglotOptions)};
+static llvm::cl::list<polyglot::Language> languages{
+    "lang",
+    llvm::cl::desc{"A list of languages to output wrappers for. If "
+                   "unset, all supported languages will be "
+                   "generated."},
+    llvm::cl::values(clEnumValN(polyglot::Language::Cpp, "cpp", "C++"),
+                     clEnumValN(polyglot::Language::D, "d", "D"),
+                     clEnumValN(polyglot::Language::Rust, "rust", "Rust"),
+                     clEnumValN(polyglot::Language::Zig, "zig", "Zig")),
+    llvm::cl::ZeroOrMore,
+    llvm::cl::cat(polyglotOptions)};
 static llvm::cl::opt<std::string> outputDir{"output-dir",
                                             llvm::cl::desc{"The directory to output wrappers into. By default, this is set "
                                                            "to the current directory."}};

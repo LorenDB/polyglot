@@ -13,6 +13,7 @@
 #include "CppUtils.h"
 #include "DWrapperWriter.h"
 #include "RustWrapperWriter.h"
+#include "ZigWrapperWriter.h"
 #include "Utils.h"
 
 polyglot::Value getExprValue(const clang::Expr *defaultValue, const clang::ASTContext &context)
@@ -195,6 +196,12 @@ void CppParser::writeWrappers()
             std::ofstream rustFile{m_outputDir + moduleName + ".rs"};
             RustWrapperWriter rustWrapper;
             rustWrapper.write(ast, rustFile);
+        }
+        if (std::find(m_langs.begin(), m_langs.end(), polyglot::Language::Zig) != m_langs.end())
+        {
+            std::ofstream zigFile{m_outputDir + moduleName + ".zig"};
+            ZigWrapperWriter zigWrapper;
+            zigWrapper.write(ast, zigFile);
         }
     }
 }

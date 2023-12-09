@@ -1,0 +1,5 @@
+name: example5
+sources:
+    - example5.cpp
+    - example5d.d
+    - main.zig

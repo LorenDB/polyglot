@@ -9,7 +9,7 @@ std::string Utils::getModuleName(std::string filename)
     // TODO: this should not be the only source of truth for module names; also implement source scanning to check module
     // names
     std::string moduleName;
-    if (filename.ends_with(".cpp") || filename.ends_with(".cxx") || filename.ends_with(".c++"))
+    if (filename.ends_with(".cpp") || filename.ends_with(".cxx") || filename.ends_with(".c++") || filename.ends_with(".zig"))
         moduleName = filename.substr(0, filename.size() - 4);
     else if (filename.ends_with(".cc") || filename.ends_with(".rs"))
         moduleName = filename.substr(0, filename.size() - 3);
@@ -38,6 +38,8 @@ std::string Utils::getLanguageName(const polyglot::AST &ast)
         return "Rust";
     case polyglot::Language::Swift:
         return "Swift";
+    case polyglot::Language::Zig:
+        return "Zig";
     default:
         return "<unrecognized language>";
     }
