@@ -16,6 +16,8 @@ add_executable(polyglot-cpp
     core/RustWrapperWriter.h
     core/Utils.cpp
     core/Utils.h
+    core/ZigWrapperWriter.cpp
+    core/ZigWrapperWriter.h
     core/WrapperWriter.cpp
     core/WrapperWriter.h
 

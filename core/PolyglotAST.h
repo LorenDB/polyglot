@@ -234,6 +234,9 @@ namespace polyglot
             //! If the enumerator has an explicit value set, it will be stored here.
             std::optional<Value> value;
         };
+        
+        //! Inferred tag type
+        QualifiedType tagType;
 
         virtual ASTNodeType nodeType() const override;
 

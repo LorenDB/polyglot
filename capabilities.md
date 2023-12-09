@@ -14,18 +14,19 @@ Bindings can be created for use from these languages.
 
 - D
 - Rust
+- Zig
 
 ## Feature support chart
 
 This chart shows what features Polyglot supports in its source languages. Support for a feature in a source language does not guarantee that Polyglot can replicate that feature in every wrapper  language (e.g. you cannot wrap classes for use in C because C does not support classes).
 
-|Feature            |C++        |D      |Rust   |
-|-------------------|-----------|-------|-------|
-|Basic types        |yes        |       |       |
-|Pointers           |partial    |       |       |
-|Basic functions    |yes        |       |       |
-|Enums              |yes        |       |       |
-|Structs/classes    |partial    |       |       |
-|noreturn           |yes        |       |       |
-|nothrow            |           |       |       |
-|Memory safety      | -         |       |       |
+|Feature            |C++        |D      |Rust   |Zig    |
+|-------------------|-----------|-------|-------|-------|
+|Basic types        |yes        |       |       |       |
+|Pointers           |partial    |       |       |       |
+|Basic functions    |yes        |       |       |       |
+|Enums              |yes        |       |       |       |
+|Structs/classes    |partial    |       |       |       |
+|noreturn           |yes        |       |       |       |
+|nothrow            |           |       |       |       |
+|Memory safety      | -         |       |       |       |

@@ -12,6 +12,9 @@ To get started using Polyglot, you will need to make sure that you have the foll
 - clang-devel
 - the Rust toolchain (only tested using rustup for now)
 - a D toolchain (currently only ldc2 is supported; this will change in the future)
+- the Zig toolchain (can replace clang if you want)
+
+**Note:** For C++, zig toolchain uses only [LLVM]**C++ ABI** (no [GNU] `libstdc++`) by default.
 
 Then run `./build.sh` from this repository. This will build `polyglot-cpp` (the C++ scanner and binding generator) and `polybuild` (the wrapper build tool) and install them for you. Once installed, you can use Polyglot by creating a `polyglot.yml` file and then running `polybuild`. For example projects to build, see the `tests/` folder in this repository. You can learn how to create a `polybuild.yml` file [here](./polybuild/README.md).
 
@@ -30,7 +33,7 @@ Polyglot uses two modes of binding generation:
 
 1. Direct bindings
 
-   Direct bindings are bindings that simply create a direct pointer from the target language to the source language. This is achieved either by using `extern(C++)`-style calls ([D](https://dlang.org/spec/cpp_interface.html) and [Swift](https://www.swift.org/documentation/cxx-interop/)) or by manually overriding name mangling ([D](https://dlang.org/spec/pragma.html#mangle) and [Rust](https://doc.rust-lang.org/reference/items/external-blocks.html#the-link_name-attribute)). This is the best kind of binding available, since it provides a zero-overhead calling system. When you see libraries that expose all symbols via `extern "C"`-style linkage, that is an example of direct bindings as traditionally used.
+   Direct bindings are bindings that simply create a direct pointer from the target language to the source language. This is achieved either by using `extern(C++)`-style calls ([D](https://dlang.org/spec/cpp_interface.html) and [Swift](https://www.swift.org/documentation/cxx-interop/)) or by manually overriding name mangling ([D](https://dlang.org/spec/pragma.html#mangle), [Rust](https://doc.rust-lang.org/reference/items/external-blocks.html#the-link_name-attribute) and [Zig](https://ziglang.org/documentation/master/#extern)). This is the best kind of binding available, since it provides a zero-overhead calling system. When you see libraries that expose all symbols via `extern "C"`-style linkage, that is an example of direct bindings as traditionally used.
 
 2. Proxied bindings
 
@@ -38,7 +41,7 @@ Polyglot uses two modes of binding generation:
 
 ## How can I help?
 
-Currently, Polyglot is very minimal; it only supports C++, D, and Rust, and only fundamental types are supported. There is no support for classes and structs, templates are probably not going to be supported for a long time, and advanced things like coroutines and automatic type conversion are way off in the distance. If you are familiar with clang's libtooling, you can help by working on some basic things like structs and classes. Also, the current binding generator is a one-way street: it only supports wrapping C++. I'd appreciate any help building new language wrappers.
+Currently, Polyglot is very minimal; it only supports C++, D, Rust and Zig, and only fundamental types are supported. There is no support for classes and structs, templates are probably not going to be supported for a long time, and advanced things like coroutines and automatic type conversion are way off in the distance. If you are familiar with clang's libtooling, you can help by working on some basic things like structs and classes. Also, the current binding generator is a one-way street: it only supports wrapping C++. I'd appreciate any help building new language wrappers.
 
 ## Contact
 

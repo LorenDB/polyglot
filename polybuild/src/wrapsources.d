@@ -22,6 +22,8 @@ string[] wrapFiles(Sources sources, string outdir)
             command ~= ["--lang", "d"];
         if (sources.languages.rust)
             command ~= ["--lang", "rust"];
+        if (sources.languages.zig)
+            command ~= ["--lang", "zig"];
         command ~= ["--output-dir", outdir, "--", "-isystem", clangIncludePath];
         if (spawnProcess(command).wait() != 0)
             throw new Exception("polyglot-cpp failed");
@@ -32,6 +34,8 @@ string[] wrapFiles(Sources sources, string outdir)
                 ret ~= [outdir ~ '/' ~ file.getCppFileBasename ~ ".d"];
             if (sources.languages.rust)
                 ret ~= [outdir ~ '/' ~ file.getCppFileBasename ~ ".rs"];
+            if (sources.languages.zig)
+                ret ~= [outdir ~ '/' ~ file.getCppFileBasename ~ ".zig"];
         }
     }
 
@@ -41,6 +45,10 @@ string[] wrapFiles(Sources sources, string outdir)
     }
 
     foreach (file; sources.rustSources)
+    {
+    }
+
+    foreach (file; sources.zigSources)
     {
     }
 
