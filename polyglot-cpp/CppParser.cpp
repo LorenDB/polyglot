@@ -281,6 +281,8 @@ polyglot::QualifiedType CppParser::typeFromClangType(const clang::QualType &type
         ret.baseType = Type::Enum;
         ret.nameString = enumType->getDecl()->getNameAsString();
     }
+    else if (CppUtils::isStdString(type))
+        ret.baseType = Type::CppStdString;
     else if (auto classType = (underlyingType->getAsCXXRecordDecl()))
     {
         ret.baseType = Type::Class;
@@ -292,8 +294,6 @@ polyglot::QualifiedType CppParser::typeFromClangType(const clang::QualType &type
         auto qt = rValue->getPointeeType();
         ret.nameString = qt.getAsString();
     }
-    else if (CppUtils::isStdString(type))
-        ret.baseType = Type::CppStdString;
     else
         throw std::runtime_error(std::format("Unrecognized type: {}", ret.nameString));
 

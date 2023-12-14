@@ -49,6 +49,9 @@ void main()
 	// auto f2ptr = Example1.getFoo2();
 	// f2ptr.foo();
 	// f2ptr.bar(8);
+
+	// 8. std::string support
+	cppStdString().writeln;
 }
 
 unittest

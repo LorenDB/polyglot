@@ -49,7 +49,8 @@ int buildApp(ref Buildfile buildfile, ref PolybuildOptions options)
         foreach (file; buildfile.allSourcesPlusWrappers.cppSources)
         {
             string objFile = "build/" ~ file ~ ".o";
-            auto command = ["clang++", file, "-c", "-o", objFile];
+            // -D_GLIBCXX_USE_CXX11_ABI=0 is needed to make C++11 std::string bindings work
+            auto command = ["clang++", file, "-c", "-D_GLIBCXX_USE_CXX11_ABI=0", "-o", objFile];
             if (options.verbose)
                 writeln("Executing " ~ command.join(' '));
             retval = spawnProcess(command).wait();
@@ -115,8 +116,9 @@ int buildApp(ref Buildfile buildfile, ref PolybuildOptions options)
         foreach (fileEntry; chain(buildfile.allSourcesPlusWrappers.dSources))
             dFiles ~= fileEntry;
 
+        // --d-version=_GLIBCXX_USE_CXX98_ABI is needed to make C++11 std::string bindings work
         auto command = ["ldc2"] ~ dFiles.sort.uniq.array ~ [
-            "-c", "-of", "build/d_monolithic_obj_file.o"
+            "-c", "--d-version=_GLIBCXX_USE_CXX98_ABI", "-of", "build/d_monolithic_obj_file.o"
         ];
         if (options.verbose)
             writeln("Executing " ~ command.join(' '));
