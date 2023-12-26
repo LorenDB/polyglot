@@ -158,6 +158,8 @@ namespace polyglot
 
         //! This is only set if baseType is equal to Type::Class or Type::Enum.
         std::string nameString;
+
+        bool operator==(const QualifiedType &other) const = default;
     };
 
     //! A raw value used in an expression (e.g. a default argument).
@@ -222,6 +224,22 @@ namespace polyglot
 
         //! If the function is part of a class, whether the function is marked final.
         bool isFinal;
+
+        //! If a type proxy function has been created for this function, a representation will be stored here.
+        struct TypeProxy
+        {
+            //! Whether the parent function is actually proxied.
+            bool isValid = false;
+
+            //! Whether the return value of the function is proxied.
+            bool isReturnProxied = false;
+
+            //! Contains the name of all parameters that should have their types proxied.
+            std::vector<std::string> proxiedParameters;
+
+            //! The representation of the proxy function.
+            FunctionNode *proxy = nullptr;
+        } typeProxy;
     };
 
     struct EnumNode : public ASTNode

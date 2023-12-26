@@ -8,12 +8,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(LLVM REQUIRED)
 
 add_executable(polyglot-cpp
+    core/CppWrapperWriter.cpp
+    core/CppWrapperWriter.h
+    core/CppTypeProxyWriter.cpp
+    core/CppTypeProxyWriter.h
     core/DWrapperWriter.cpp
     core/DWrapperWriter.h
     core/PolyglotAST.cpp
     core/PolyglotAST.h
     core/RustWrapperWriter.cpp
     core/RustWrapperWriter.h
+    core/TypeProxyWriter.h
     core/Utils.cpp
     core/Utils.h
     core/ZigWrapperWriter.cpp

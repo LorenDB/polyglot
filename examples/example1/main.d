@@ -52,6 +52,7 @@ void main()
 
 	// 8. std::string support
 	cppStdString().writeln;
+	lotsOfStdStrings("This is a ", "two-part string").writeln;
 }
 
 unittest

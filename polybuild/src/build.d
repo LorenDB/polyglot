@@ -49,7 +49,10 @@ int buildApp(ref Buildfile buildfile, ref PolybuildOptions options)
     {
         foreach (file; buildfile.allSourcesPlusWrappers.cppSources)
         {
-            string objFile = "build/" ~ file ~ ".o";
+            string objFile = file ~ ".o";
+            if (!objFile.startsWith("build/"))
+                objFile = "build/" ~ objFile;
+
             // -D_GLIBCXX_USE_CXX11_ABI=0 is needed to make C++11 std::string bindings work
             auto command = ["clang++", file, "-c", "-D_GLIBCXX_USE_CXX11_ABI=0", "-o", objFile];
             if (options.verbose)

@@ -27,11 +27,16 @@ int32_t square(int32_t root)
 // T squaredCppTemplate(T root)
 //{
 //     return root * root;
-// }
+//}
 
- std::string cppStdString()
+std::string cppStdString()
 {
      return "This is a C++ std::string";
+}
+
+std::string lotsOfStdStrings(std::string a, std::string b)
+{
+    return a + b;
 }
 
 // double foo1(float foo, float bar = 12.345, char baz = 'c', bool b = true, void *v = nullptr)

@@ -8,6 +8,7 @@ module polybuild.wrapsources;
 
 import std.algorithm;
 import std.process;
+import std.file;
 
 import polybuild.buildfile;
 import polybuild.cpphelper;
@@ -36,6 +37,10 @@ string[] wrapFiles(Sources sources, string outdir)
                 ret ~= [outdir ~ '/' ~ file.getCppFileBasename ~ ".rs"];
             if (sources.languages.zig)
                 ret ~= [outdir ~ '/' ~ file.getCppFileBasename ~ ".zig"];
+
+            auto proxyPath = outdir ~ '/' ~ file.getCppFileBasename ~ ".proxy.cpp";
+            if (proxyPath.exists)
+                ret ~= [outdir ~ '/' ~ file.getCppFileBasename ~ ".proxy.cpp"];
         }
     }
 

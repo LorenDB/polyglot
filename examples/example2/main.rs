@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0
 
 mod example2;
+use example2::lotsOfStdStrings;
 
 fn main()
 {
@@ -36,4 +37,7 @@ fn main()
 	println!("f1.sixteen = {}", f1.sixteen);
 	f1.foo();
 	f1.bar(7);
+
+	println!("{}", example2::cppStdString());
+	println!("{}", lotsOfStdStrings("This is a ".to_string(), "two-part string".to_string()));
 }

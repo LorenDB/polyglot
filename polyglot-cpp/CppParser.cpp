@@ -10,6 +10,7 @@
 
 #include <clang/AST/Mangle.h>
 
+#include "CppTypeProxyWriter.h"
 #include "CppUtils.h"
 #include "DWrapperWriter.h"
 #include "RustWrapperWriter.h"
@@ -183,25 +184,40 @@ void CppParser::addClass(const clang::CXXRecordDecl *classDecl, const std::strin
 
 void CppParser::writeWrappers()
 {
-    for (const auto &[moduleName, ast] : m_asts)
+    for (auto &[moduleName, ast] : m_asts)
     {
-        if (std::find(m_langs.begin(), m_langs.end(), polyglot::Language::D) != m_langs.end())
+        CppTypeProxyWriter proxy;
+        std::ofstream proxyFile{m_outputDir + moduleName + ".proxy.cpp"};
+        proxy.generateNeededProxies(ast, proxyFile);
+
+        for (const auto lang : m_langs)
         {
-            std::ofstream dFile{m_outputDir + moduleName + ".d"};
-            DWrapperWriter dWrapper;
-            dWrapper.write(ast, dFile);
-        }
-        if (std::find(m_langs.begin(), m_langs.end(), polyglot::Language::Rust) != m_langs.end())
-        {
-            std::ofstream rustFile{m_outputDir + moduleName + ".rs"};
-            RustWrapperWriter rustWrapper;
-            rustWrapper.write(ast, rustFile);
-        }
-        if (std::find(m_langs.begin(), m_langs.end(), polyglot::Language::Zig) != m_langs.end())
-        {
-            std::ofstream zigFile{m_outputDir + moduleName + ".zig"};
-            ZigWrapperWriter zigWrapper;
-            zigWrapper.write(ast, zigFile);
+            std::ofstream outputFile;
+            WrapperWriter *wrapper = nullptr;
+
+            switch (lang)
+            {
+            case polyglot::Language::D:
+                outputFile.open(m_outputDir + moduleName + ".d");
+                wrapper = new DWrapperWriter;
+                break;
+            case polyglot::Language::Rust:
+                outputFile.open(m_outputDir + moduleName + ".rs");
+                wrapper = new RustWrapperWriter;
+                break;
+            case polyglot::Language::Zig:
+                outputFile.open(m_outputDir + moduleName + ".zig");
+                wrapper = new ZigWrapperWriter;
+                break;
+            default:
+                break;
+            }
+
+            if (!wrapper)
+                continue;
+
+            wrapper->write(ast, outputFile);
+            delete wrapper;
         }
     }
 }

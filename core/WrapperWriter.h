@@ -5,11 +5,13 @@
 #pragma once
 
 #include "PolyglotAST.h"
+#include "TypeProxyWriter.h"
 
 class WrapperWriter
 {
 public:
     WrapperWriter();
+    virtual ~WrapperWriter();
 
     virtual void write(const polyglot::AST &ast, std::ostream &out) = 0;
 

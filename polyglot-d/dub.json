@@ -7,7 +7,7 @@
 	"name": "polyglot-d",
 	"copyright": "Copyright © 2023, Loren Burkholder",
 	"dependencies": {
-		"dmd": "~>2.105.0"
+		"dmd:frontend": "~>2.105.0"
 	},
 	"targetPath": "../build/"
 }
